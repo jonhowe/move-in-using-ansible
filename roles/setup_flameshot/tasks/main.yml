@@ -1,0 +1,43 @@
+---
+- name: Ensure Flameshot is installed
+  apt:
+    name: flameshot
+    state: present
+    update_cache: true
+
+- name: Create Flameshot startup script
+  copy:
+    dest: /usr/local/bin/start-flameshot-wayland.sh
+    content: |
+      #!/bin/bash
+      export QT_QPA_PLATFORM=wayland
+      flameshot &
+    mode: '0755'
+
+- name: Create autostart directory
+  file:
+    path: "{{ HOME_DIRECTORY }}/.config/autostart"
+    state: directory
+    mode: '0755'
+
+- name: Create Flameshot autostart entry
+  copy:
+    dest: "{{ HOME_DIRECTORY }}/.config/autostart/flameshot.desktop"
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Exec=/usr/local/bin/start-flameshot-wayland.sh
+      Hidden=false
+      NoDisplay=false
+      X-GNOME-Autostart-enabled=true
+      Name[en_US]=Flameshot
+      Name=Flameshot
+      Comment[en_US]=Start Flameshot with Wayland support
+      Comment=Start Flameshot with Wayland support
+    mode: '0644'
+
+- name: Set custom keybindings for flameshot
+  community.general.dconf:
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+  loop: "{{ keybindings }}"

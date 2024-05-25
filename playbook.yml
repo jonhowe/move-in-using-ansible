@@ -1,0 +1,21 @@
+---
+- name: Install applications on Linux
+  hosts: localhost
+  become: true
+
+  vars_files:
+    - vars/main.yml
+
+  roles:
+    - apt_packages
+    - install_applications
+    - setup_docker
+    - install_joplin
+    - install_zoom
+    - install_rambox
+    - setup_resilio_sync
+    - create_directories
+    - configure_git
+    - update_user_dirs
+    - configure_gnome
+    - setup_flameshot

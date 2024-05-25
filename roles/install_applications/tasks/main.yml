@@ -1,0 +1,5 @@
+---
+- import_tasks: add_keys_and_repos.yml
+- import_tasks: install_apt_apps.yml
+- import_tasks: install_snaps.yml
+- import_tasks: install_pip3.yml

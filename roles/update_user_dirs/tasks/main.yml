@@ -1,0 +1,36 @@
+---
+- name: Replace $HOME/Downloads in user-dirs.dirs
+  ansible.builtin.lineinfile:
+    path: "{{ HOME_DIRECTORY }}/.config/user-dirs.dirs"
+    regexp: 'XDG_DOWNLOAD_DIR="\$HOME/Downloads"'
+    line: 'XDG_DOWNLOAD_DIR="{{ BTSYNC_FOLDER_ROOT }}"'
+    backrefs: true
+
+- name: Add entries to GTK bookmarks
+  ansible.builtin.lineinfile:
+    path: "{{ HOME_DIRECTORY }}/.config/gtk-3.0/bookmarks"
+    line: "file://{{ item.path }} {{ item.name }}"
+    create: true
+    state: present
+  loop: "{{ bookmarks }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Set the Downloads directory to the correct location
+  block:
+    - name: Check the downloads directory status
+      stat:
+        path: "{{ HOME_DIRECTORY }}/Downloads"
+      register: downloads_dir_stat
+
+    - name: Remove existing Downloads directory if it is not a symlink
+      when: downloads_dir_stat.stat.exists and not downloads_dir_stat.stat.islnk
+      file:
+        path: "{{ HOME_DIRECTORY }}/Downloads"
+        state: absent
+
+    - name: Create symlink for Downloads directory
+      ansible.builtin.file:
+        src: "{{ BTSYNC_FOLDER_ROOT }}/Downloads"
+        dest: "{{ HOME_DIRECTORY }}/Downloads"
+        state: link

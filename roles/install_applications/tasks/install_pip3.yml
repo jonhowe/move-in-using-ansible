@@ -1,0 +1,8 @@
+---
+- name: Install pip packages
+  pip:
+    name: "{{ item }}"
+    state: present
+    executable: pip3
+    extra_args: "--break-system-packages"
+  loop: "{{ pip3_packages }}"

@@ -1,0 +1,24 @@
+---
+- name: Pull Resilio Sync Docker image
+  community.docker.docker_image:
+    name: "{{ resilio_sync.image }}"
+    source: pull
+
+- name: Run Resilio Sync Docker container
+  community.docker.docker_container:
+    name: "{{ resilio_sync.name }}"
+    image: "{{ resilio_sync.image }}"
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "127.0.0.1:{{ resilio_sync.webui_port }}:8888"
+      - "5555:5555"
+    volumes:
+      - "{{ resilio_sync.btsync_root }}:/mnt/sync"
+    log_driver: "json-file"
+    log_options:
+      max-size: "15m"
+      max-file: "2"
+    env:
+      MEM_LIMIT: "{{ resilio_sync.mem_limit }}"
+    cpus: "{{ resilio_sync.cpus }}"

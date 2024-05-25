@@ -1,0 +1,37 @@
+---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+
+- name: Set Rambox installed fact
+  set_fact:
+    is_rambox_installed: "{{ 'rambox' in ansible_facts.packages }}"
+
+- name: Fetch the latest Rambox release
+  uri:
+    url: https://api.github.com/repos/ramboxapp/download/releases/latest
+    return_content: true
+  register: latest_release_response
+  when: not is_rambox_installed
+
+- name: Set the latest Rambox release
+  set_fact:
+    latest_release: "{{ latest_release_response.json }}"
+  when: not is_rambox_installed
+
+- name: Find .deb asset
+  set_fact:
+    deb_asset: "{{ item }}"
+  loop: "{{ latest_release.assets | default([]) }}"
+  when: item.name.endswith('.deb') and not is_rambox_installed
+
+- name: Download Rambox .deb package
+  ansible.builtin.get_url:
+    url: "{{ deb_asset.browser_download_url }}"
+    dest: "{{ TEMPDIR }}/{{ deb_asset.name }}"
+    mode: '0755'
+  when: deb_asset is defined and not is_rambox_installed
+
+- name: Install Rambox .deb package
+  ansible.builtin.apt:
+    deb: "{{ TEMPDIR }}/{{ deb_asset.name }}"
+  when: deb_asset is defined and not is_rambox_installed

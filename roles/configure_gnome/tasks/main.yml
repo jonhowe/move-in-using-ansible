@@ -1,0 +1,7 @@
+---
+- name: Set GNOME settings
+  command: gsettings set {{ item.schema }} {{ item.key }} {{ item.value }}
+  loop: "{{ gsettings }}"
+  loop_control:
+    label: "{{ item.key }}"
+  become: false

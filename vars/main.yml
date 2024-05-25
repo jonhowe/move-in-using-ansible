@@ -1,0 +1,96 @@
+USER: "jhowe"
+GROUP: "jhowe"
+HOME_DIRECTORY: "/home/jhowe"
+TEMPDIR: "/tmp"
+BTSYNC_ROOT: "{{ HOME_DIRECTORY }}/storage/btsync"
+BTSYNC_FOLDER_ROOT: "{{ BTSYNC_ROOT }}/folders"
+
+applications:
+  - name: spotify-client
+    repo: "deb http://repository.spotify.com stable non-free"
+    key_url: "https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg"
+  - name: signal-desktop
+    repo: "deb [arch=amd64] https://updates.signal.org/desktop/apt xenial main"
+    key_url: "https://updates.signal.org/desktop/apt/keys.asc"
+  - name: enpass
+    repo: "deb https://apt.enpass.io/ stable main"
+    key_url: "https://apt.enpass.io/keys/enpass-linux.key"
+  - name: virtualbox
+    repo: "deb [arch=amd64] https://download.virtualbox.org/virtualbox/debian bionic contrib"
+    key_url: "https://www.virtualbox.org/download/oracle_vbox_2016.asc"
+
+snaps_classic:
+  - code
+  - powershell
+
+snaps_regular:
+  - brave
+  - drawing
+  - signal-desktop
+  - remmina
+
+apt_packages:
+  - vim
+  - tilda
+  - docker.io
+  - docker-compose
+  - curl
+  - plank
+  - moreutils
+  - neofetch
+  - python3-pip
+
+pip3_packages:
+  - psutil
+
+directories:
+  - "{{ BTSYNC_FOLDER_ROOT }}/britt-jon"
+  - "{{ BTSYNC_FOLDER_ROOT }}/DCIM"
+  - "{{ BTSYNC_FOLDER_ROOT }}/Images"
+  - "{{ BTSYNC_FOLDER_ROOT }}/Downloads"
+  - "{{ BTSYNC_FOLDER_ROOT }}/Work/Customers"
+  - "{{ BTSYNC_FOLDER_ROOT }}/Sync/Screenshots"
+  - "{{ HOME_DIRECTORY }}/Docker"
+  - "{{ HOME_DIRECTORY }}/git"
+
+resilio_sync:
+  image: "resilio/sync"
+  name: "Sync"
+  webui_port: "8888"
+  btsync_root: "{{ BTSYNC_ROOT }}"
+  mem_limit: "128m"
+  cpus: "0.5"
+
+bookmarks:
+  - path: "{{ BTSYNC_FOLDER_ROOT }}"
+    name: "Sync"
+  - path: "{{ BTSYNC_FOLDER_ROOT }}/Sync/Screenshots"
+    name: "Screenshots"
+  - path: "{{ HOME_DIRECTORY }}/git"
+    name: "Git"
+
+gsettings:
+  - schema: org.gnome.desktop.interface
+    key: clock-show-weekday
+    value: 'true'
+  - schema: org.gnome.desktop.interface
+    key: clock-format
+    value: "'12h'"
+  - schema: org.gnome.shell.extensions.dash-to-dock
+    key: show-mounts
+    value: 'false'
+  # - schema: org.gnome.desktop.default-applications.browser
+  #   key: exec
+  #   value: "'brave-browser'"
+  # - schema: org.gnome.desktop.default-applications.browser
+  #   key: exec-arg
+  #   value: "'--new-window %U'"
+  
+
+flameshot_command: "flameshot gui -p /storage/btsync/folders/Sync/Screenshots/"
+keybindings:
+  - { key: "/org/gnome/settings-daemon/plugins/media-keys/screenshot", value: "['disabled']" }
+  - { key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings", value: "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0']" }
+  - { key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/name", value: "'Flameshot Screenshot'" }
+  - { key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/command", value: "'{{ flameshot_command }}'" }
+  - { key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/binding", value: "'Print'" }

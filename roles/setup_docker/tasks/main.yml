@@ -1,0 +1,11 @@
+---
+- name: Enable Docker service
+  ansible.builtin.service:
+    name: docker.service
+    enabled: true
+
+- name: Add user to Docker group
+  ansible.builtin.user:
+    name: "{{ USER }}"
+    groups: docker
+    append: true

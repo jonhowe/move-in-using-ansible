@@ -1,0 +1,12 @@
+---
+- name: Download Joplin installer
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/laurent22/joplin/master/Joplin_install_and_update.sh"
+    dest: "{{ TEMPDIR }}"
+    mode: '0777'
+
+- name: Run Joplin installer
+  ansible.builtin.shell: "{{ TEMPDIR }}/Joplin_install_and_update.sh"
+  become: false
+  args:
+    creates: "{{ HOME_DIRECTORY }}/.joplin/Joplin.AppImage"

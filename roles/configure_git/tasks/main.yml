@@ -1,0 +1,12 @@
+---
+- name: Configure Git user.email
+  community.general.git_config:
+    scope: global
+    name: user.email
+    value: "howe.jon@gmail.com"
+
+- name: Configure Git user.name
+  community.general.git_config:
+    scope: global
+    name: user.name
+    value: "Jon Howe"

@@ -1,0 +1,9 @@
+---
+- name: Create directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ USER }}"
+    group: "{{ GROUP }}"
+    mode: '0777'
+  loop: "{{ directories }}"
