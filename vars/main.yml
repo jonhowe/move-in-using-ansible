@@ -28,6 +28,7 @@ snaps_regular:
   - drawing
   - signal-desktop
   - remmina
+  - plex-desktop
 
 apt_packages:
   - vim
