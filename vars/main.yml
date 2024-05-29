@@ -40,6 +40,8 @@ apt_packages:
   - moreutils
   - neofetch
   - python3-pip
+  - libglib2.0-dev-bin
+  - gdm-settings
 
 pip3_packages:
   - psutil
@@ -80,6 +82,25 @@ gsettings:
   - schema: org.gnome.shell.extensions.dash-to-dock
     key: show-mounts
     value: 'false'
+  - schema: org.gnome.desktop.background
+    key: color-shading-type
+    value: "'solid'"
+  - schema: org.gnome.desktop.background
+    key: picture-options
+    value: "'zoom'"
+  - schema: org.gnome.desktop.background
+    key: picture-uri
+    value: "'file:///usr/share/backgrounds/Fuji_san_by_amaral.png'"
+  - schema: org.gnome.desktop.background
+    key: picture-uri-dark
+    value: "'file:///usr/share/backgrounds/Fuji_san_by_amaral.png'"
+  - schema: org.gnome.desktop.background
+    key: primary-color
+    value: "'#000000'"
+  - schema: org.gnome.desktop.background
+    key: secondary-color
+    value: "'#000000'"
+    
   # - schema: org.gnome.desktop.default-applications.browser
   #   key: exec
   #   value: "'brave-browser'"
