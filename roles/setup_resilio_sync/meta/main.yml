@@ -1,0 +1,5 @@
+---
+dependencies:
+  - role: create_directories
+  - role: apt_packages
+  - role: setup_docker

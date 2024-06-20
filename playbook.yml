@@ -7,15 +7,15 @@
     - vars/main.yml
 
   roles:
-    - apt_packages
-    - install_applications
-    - setup_docker
-    - install_joplin
-    - install_zoom
-    - install_rambox
-    - setup_resilio_sync
-    - create_directories
-    - configure_git
-    - update_user_dirs
-    - configure_gnome
-    - setup_flameshot
+    - { role: apt_packages, tags: ['base', 'apps'] }
+    - { role: install_applications, tags: ['base', 'apps'] }
+    - { role: setup_docker, tags: ['docker'] }
+    - { role: install_joplin, tags: ['apps'] }
+    - { role: install_zoom, tags: ['apps'] }
+    - { role: install_rambox, tags: ['apps'] }
+    - { role: setup_resilio_sync, tags: ['apps'] }
+    - { role: create_directories, tags: ['base'] }
+    - { role: configure_git, tags: ['base'] }
+    - { role: update_user_dirs, tags: ['base'] }
+    - { role: configure_gnome, tags: ['customization'] }
+    - { role: setup_flameshot, tags: ['apps'] }
