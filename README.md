@@ -47,5 +47,9 @@ This role sets up Flameshot, a screenshot tool, ensuring it is installed and pro
 To use this playbook, run the following command in your terminal:
 
 ```bash
-ansible-pull -U https://github.com/jonhowe/move-in-using-ansible playbook.yml --ask-become-pass
+ansible-pull -U https://github.com/jonhowe/move-in-using-ansible playbook.yml --ask-become-pass --tags "install_applications,setup_docker"
+```
+or
+```bash
+ansible-pull -U https://github.com/jonhowe/move-in-using-ansible playbook.yml --ask-become-pass --skip-tags "install_joplin,setup_flameshot"
 ```
