@@ -1,0 +1,16 @@
+---
+- name: Download Synaptics Repo
+  get_url:
+    url: "https://www.synaptics.com/sites/default/files/Ubuntu/pool/stable/main/all/synaptics-repository-keyring.deb"
+    dest: "{{ TEMPDIR }}/synaptics-repository-keyring.deb"
+
+- name: Install Synaptics Repo Keyring
+  ansible.builtin.apt:
+    deb: "{{ TEMPDIR }}/synaptics-repository-keyring.deb"
+    state: present
+
+- name: Clean up
+  file:
+    path: "{{ TEMPDIR }}/synaptics-repository-keyring.deb"
+    state: absent
+  become: true

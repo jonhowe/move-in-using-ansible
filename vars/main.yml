@@ -40,6 +40,8 @@ apt_packages:
   - moreutils
   - neofetch
   - python3-pip
+  - dkms
+  - displaylink-driver
   - libglib2.0-dev-bin
   - gdm-settings
 
