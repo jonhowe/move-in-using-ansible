@@ -19,3 +19,5 @@
     - { role: update_user_dirs, tags: ['base'] }
     - { role: configure_gnome, tags: ['customization'] }
     - { role: setup_flameshot, tags: ['apps'] }
+    - { role: install_displaylink_repo, tags: ['laptop'] }
+    - { role: install_beeper, tags: ['comms'] }

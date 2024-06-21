@@ -1,0 +1,35 @@
+---
+- name: Ensure ~/bin directory exists
+  file:
+    path: "{{ HOME_DIRECTORY }}/bin"
+    state: directory
+    mode: '0755'
+  become: false
+
+- name: Download Beeper AppImage
+  get_url:
+    url: https://download.beeper.com/linux/appImage/x64
+    dest: "{{ HOME_DIRECTORY }}/bin/Beeper-x64.AppImage"
+    mode: '0755'
+  become: false
+
+- name: Ensure Beeper AppImage is executable
+  file:
+    path: "{{ HOME_DIRECTORY }}/bin/Beeper-x64.AppImage"
+    mode: '0755'
+    state: file
+  become: false
+
+- name: Ensure applications directory exists
+  file:
+    path: "{{ HOME_DIRECTORY }}/.local/share/applications"
+    state: directory
+    mode: '0755'
+  become: false
+
+- name: Create desktop entry for Beeper
+  template:
+    src: beeper.desktop.j2
+    dest: "{{ HOME_DIRECTORY }}/.local/share/applications/beeper.desktop"
+    mode: '0644'
+  become: false
