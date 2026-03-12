@@ -9,3 +9,15 @@
   community.general.snap:
     name: "{{ item }}"
   loop: "{{ snaps_regular }}"
+
+- name: Install optional snap applications
+  community.general.snap:
+    name: "{{ item.snap_name }}"
+    classic: "{{ item.classic | default(false) }}"
+    channel: "{{ item.channel | default('stable') }}"
+  loop: "{{ optional_snap_applications }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - item.enabled | bool
+    - item.install_method == "snap"

@@ -1,7 +1,0 @@
----
-- name: Install Joplin
-  community.general.snap:
-    name: "{{ joplin.snap_name }}"
-    classic: "{{ joplin.classic }}"
-    channel: "{{ joplin.channel }}"
-  when: joplin.enabled | bool and joplin.install_method == "snap"
