@@ -1,7 +1,28 @@
-- name: Install apt packages
-  apt:
-    name: "{{ item }}"
+---
+- name: Install Synaptics APT repository keyring
+  when: "'displaylink-driver' in apt_packages"
+  block:
+    - name: Download Synaptics repository keyring package
+      ansible.builtin.get_url:
+        url: "{{ synaptics_repository_keyring_deb_url }}"
+        dest: /tmp/synaptics-repository-keyring.deb
+        checksum: "{{ synaptics_repository_keyring_deb_checksum | default(omit, true) }}"
+        mode: "0644"
+
+    - name: Install Synaptics repository keyring package
+      ansible.builtin.apt:
+        deb: /tmp/synaptics-repository-keyring.deb
+        state: present
+      register: synaptics_keyring_package
+
+    - name: Update apt cache after adding Synaptics repository
+      ansible.builtin.apt:
+        update_cache: true
+      when: synaptics_keyring_package is changed
+
+- name: Install base APT packages
+  ansible.builtin.apt:
+    name: "{{ apt_packages }}"
     state: present
-    update_cache: yes
+    update_cache: true
     cache_valid_time: 3600
-  loop: "{{ apt_packages }}"

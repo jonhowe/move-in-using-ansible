@@ -1,0 +1,13 @@
+---
+- name: Read current value
+  ansible.builtin.command:
+    argv: ["gsettings", "get", "{{ item.schema }}", "{{ item.key }}"]
+  register: current_value
+  changed_when: false
+  environment: "{{ gui_session_environment }}"
+
+- name: Set value when different
+  ansible.builtin.command:
+    argv: ["gsettings", "set", "{{ item.schema }}", "{{ item.key }}", "{{ item.value }}"]
+  when: (current_value.stdout | trim) != (item.value | string | trim)
+  environment: "{{ gui_session_environment }}"

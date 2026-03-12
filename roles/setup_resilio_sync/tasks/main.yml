@@ -9,16 +9,18 @@
     name: "{{ resilio_sync.name }}"
     image: "{{ resilio_sync.image }}"
     state: started
-    restart_policy: unless-stopped
+    restart_policy: "{{ resilio_sync.restart_policy }}"
     ports:
       - "127.0.0.1:{{ resilio_sync.webui_port }}:8888"
-      - "5555:5555"
+      - "{{ resilio_sync.peer_port }}:5555"
     volumes:
       - "{{ resilio_sync.btsync_root }}:/mnt/sync"
-    log_driver: "json-file"
+    log_driver: json-file
     log_options:
       max-size: "15m"
       max-file: "2"
     env:
       MEM_LIMIT: "{{ resilio_sync.mem_limit }}"
+      PUID: "{{ ansible_user_uid | string }}"
+      PGID: "{{ ansible_user_gid | string }}"
     cpus: "{{ resilio_sync.cpus }}"

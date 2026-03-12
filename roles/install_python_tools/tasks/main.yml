@@ -1,0 +1,8 @@
+---
+- name: Install pipx-managed Python tools
+  community.general.pipx:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ pipx_packages }}"
+  when: pipx_packages | length > 0
+  environment: "{{ gui_session_environment | default({}) }}"

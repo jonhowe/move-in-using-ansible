@@ -1,0 +1,51 @@
+---
+- name: Assert this playbook is running locally on Ubuntu
+  ansible.builtin.assert:
+    that:
+      - ansible_connection == "local"
+      - ansible_os_family == "Debian"
+      - ansible_distribution == "Ubuntu"
+    fail_msg: >-
+      This playbook only supports a local Ubuntu workstation session.
+
+- name: Assert required workstation variables are set
+  ansible.builtin.assert:
+    that:
+      - user | length > 0
+      - group | length > 0
+      - home_directory | length > 0
+    fail_msg: >-
+      Required workstation variables are missing. Update vars/main.yml or .env.yml.
+
+- name: Assert the configured home directory matches the active login user
+  ansible.builtin.assert:
+    that:
+      - ansible_user_id == user
+      - ansible_env.HOME == home_directory
+    fail_msg: >-
+      The configured user/home do not match the active login session. Update .env.yml or launch this playbook as {{ user }}.
+
+- name: Assert a GUI session is present when desktop tasks are enabled
+  ansible.builtin.assert:
+    that:
+      - not (desktop_session_required | bool and preflight_gui_required | bool) or ansible_env.DISPLAY is defined or ansible_env.WAYLAND_DISPLAY is defined
+      - not (desktop_session_required | bool and preflight_gui_required | bool) or ansible_env.XDG_RUNTIME_DIR is defined
+    fail_msg: >-
+      This playbook only supports a logged-in GUI session. Launch it from Jon's desktop session, not a headless shell.
+
+- name: Build GUI session environment for user-level desktop tools
+  ansible.builtin.set_fact:
+    gui_session_environment: >-
+      {{
+        {
+          'HOME': home_directory,
+          'XDG_RUNTIME_DIR': ansible_env.XDG_RUNTIME_DIR,
+          'DBUS_SESSION_BUS_ADDRESS': ansible_env.DBUS_SESSION_BUS_ADDRESS | default('unix:path=' ~ ansible_env.XDG_RUNTIME_DIR ~ '/bus')
+        }
+        | combine((ansible_env.DISPLAY is defined) | ternary({'DISPLAY': ansible_env.DISPLAY}, {}))
+        | combine((ansible_env.WAYLAND_DISPLAY is defined) | ternary({'WAYLAND_DISPLAY': ansible_env.WAYLAND_DISPLAY}, {}))
+        | combine((ansible_env.XDG_CURRENT_DESKTOP is defined) | ternary({'XDG_CURRENT_DESKTOP': ansible_env.XDG_CURRENT_DESKTOP}, {}))
+      }}
+  when:
+    - desktop_session_required | bool
+    - ansible_env.XDG_RUNTIME_DIR is defined
