@@ -3,10 +3,12 @@
   community.general.git_config:
     scope: global
     name: user.email
-    value: "howe.jon@gmail.com"
+    value: "{{ git_user_email }}"
+  environment: "{{ gui_session_environment }}"
 
 - name: Configure Git user.name
   community.general.git_config:
     scope: global
     name: user.name
-    value: "Jon Howe"
+    value: "{{ git_user_name }}"
+  environment: "{{ gui_session_environment }}"

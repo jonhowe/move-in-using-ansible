@@ -1,20 +1,33 @@
 ---
-- name: Add GPG keys
-  ansible.builtin.apt_key:
+- name: Ensure APT keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Download repository signing keys
+  ansible.builtin.get_url:
     url: "{{ item.key_url }}"
-    state: present
+    dest: "/etc/apt/keyrings/{{ item.name }}.asc"
+    mode: "0644"
   loop: "{{ applications }}"
   loop_control:
     label: "{{ item.name }}"
+  notify: Refresh apt cache
 
-- name: Add repositories
+- name: Add repositories with signed-by keyrings
   ansible.builtin.apt_repository:
-    repo: "{{ item.repo }}"
+    repo: >-
+      {{
+        (item.repo is regex('^deb\s+\['))
+        | ternary(
+            (item.repo | regex_replace('^deb\s+\[', 'deb [signed-by=/etc/apt/keyrings/' ~ item.name ~ '.asc ')),
+            (item.repo | regex_replace('^deb\s+', 'deb [signed-by=/etc/apt/keyrings/' ~ item.name ~ '.asc] '))
+          )
+      }}
     state: present
+    filename: "{{ item.name }}"
   loop: "{{ applications }}"
   loop_control:
     label: "{{ item.name }}"
-
-- name: Update apt cache
-  ansible.builtin.apt:
-    update_cache: true
+  notify: Refresh apt cache

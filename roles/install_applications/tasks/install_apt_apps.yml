@@ -1,8 +1,5 @@
 ---
-- name: Install applications
+- name: Install APT applications
   ansible.builtin.apt:
-    name: "{{ item.name }}"
+    name: "{{ applications | map(attribute='name') | list }}"
     state: present
-  loop: "{{ applications }}"
-  loop_control:
-    label: "{{ item.name }}"

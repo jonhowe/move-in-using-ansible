@@ -1,11 +1,13 @@
 ---
-- name: Enable Docker service
+- name: Ensure Docker service is enabled and started
   ansible.builtin.service:
     name: docker.service
     enabled: true
+    state: started
 
 - name: Add user to Docker group
   ansible.builtin.user:
-    name: "{{ USER }}"
+    name: "{{ user }}"
     groups: docker
     append: true
+  when: docker_add_user_to_group | bool

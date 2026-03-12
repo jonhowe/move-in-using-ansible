@@ -1,10 +1,7 @@
 ---
-- name: Download Zoom package
-  ansible.builtin.get_url:
-    url: "https://zoom.us/client/latest/zoom_amd64.deb"
-    dest: "{{ TEMPDIR }}/zoom_amd64.deb"
-    mode: '0777'
-
-- name: Install Zoom package
-  ansible.builtin.apt:
-    deb: "{{ TEMPDIR }}/zoom_amd64.deb"
+- name: Install Zoom
+  community.general.snap:
+    name: "{{ zoom.snap_name }}"
+    classic: "{{ zoom.classic }}"
+    channel: "{{ zoom.channel }}"
+  when: zoom.enabled | bool and zoom.install_method == "snap"

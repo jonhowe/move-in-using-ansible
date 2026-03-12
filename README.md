@@ -1,55 +1,98 @@
 # Ansible Playbook: Move-In Using Ansible
 
-## Overview
+This repository bootstraps Jon's Ubuntu workstation after login. It is intended to run on the local machine inside Jon's active GUI session, not from a headless shell.
 
-This Ansible playbook automates the setup and configuration of a new Linux environment, installing various applications and configuring system settings. Below is a high-level overview of each role included in the playbook and their responsibilities.
+## What this playbook does
+
+- installs baseline APT packages
+- adds third-party APT repositories with `signed-by` keyrings
+- installs desktop applications from APT or Snap
+- enables Docker and optionally adds Jon to the `docker` group
+- runs Resilio Sync in Docker
+- configures Git, XDG user directories, GNOME settings, and Flameshot
+- installs optional Python CLI tools with `pipx`
+
+## Safety and behavior changes
+
+- The playbook now fails fast if it is not running on local Ubuntu or if no GUI session is present.
+- Local overrides are loaded from `.env.yml` if the file exists.
+- Existing files in `~/Downloads` are never deleted silently.
+  - If files are present, they are moved into the synced Downloads directory first.
+  - The playbook prints a message when this happens.
+- The old direct-download installers for Joplin, Zoom, and Rambox were replaced with Snap installs to avoid running mutable remote scripts or installing arbitrary `latest` `.deb` files.
+- Python packages are now expected to be installed with `pipx` instead of system `pip`.
+
+## Requirements
+
+- Ubuntu desktop session
+- `sudo` access
+- Ansible installed on the machine being configured
+- Collections from [collections/requirements.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/collections/requirements.yml)
+
+Install collections with:
+
+```bash
+ansible-galaxy collection install -r collections/requirements.yml
+```
+
+## Configuration
+
+Tracked defaults live in [vars/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/vars/main.yml).
+
+For machine-specific overrides, copy [.env.yml.example](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/.env.yml.example) to `.env.yml` and edit only the values you want to change.
+
+`.env.yml` is YAML, not dotenv syntax. That is intentional so nested Ansible variables remain easy to override.
+
+Common overrides:
+
+- `user`, `group`, `home_directory`
+- `git_user_name`, `git_user_email`
+- `docker_add_user_to_group`
+- `downloads_migrate_existing`
+- `pipx_packages`
+- `joplin`, `zoom`, `rambox`
+
+## Running
+
+Run locally:
+
+```bash
+ansible-playbook playbook.yml --ask-become-pass
+```
+
+Run a subset with tags:
+
+```bash
+ansible-playbook playbook.yml --ask-become-pass --tags "base,apps"
+```
 
 ## Roles
 
-### 1. `apt_packages`
-This role installs necessary APT packages to ensure the system has all required software and dependencies.
+- `preflight` validates Ubuntu, local execution, the logged-in GUI session, and key variables
+- `apt_packages` installs core Ubuntu packages and the Synaptics keyring package for DisplayLink when needed
+- `install_applications` manages third-party APT repositories plus shared Snap installs
+- `install_joplin`, `install_zoom`, `install_rambox` install those apps from Snap
+- `setup_docker` starts Docker and optionally adds Jon to the `docker` group
+- `setup_resilio_sync` starts the Resilio Sync container
+- `create_directories` creates Jon's standard directories
+- `configure_git` writes Git identity into the logged-in user's global Git config
+- `install_python_tools` installs optional user CLI tools with `pipx`
+- `update_user_dirs` sets XDG/GTK paths and safely migrates `~/Downloads`
+- `configure_gnome` applies GNOME settings from the active desktop session
+- `setup_flameshot` configures the user-level Flameshot launcher and keybindings
 
-### 2. `install_applications`
-This role installs a list of specified applications to set up the user's environment with essential tools.
+## Validation
 
-### 3. `setup_docker`
-This role sets up Docker on the system, enabling the Docker service and adding the user to the Docker group.
-
-### 4. `install_joplin`
-This role installs Joplin, a note-taking application, to help manage notes and to-do lists.
-
-### 5. `install_zoom`
-This role installs Zoom, a video conferencing application, for online meetings and communications.
-
-### 6. `install_rambox`
-This role installs Rambox, a messaging application, to centralize various messaging platforms.
-
-### 7. `setup_resilio_sync`
-This role sets up Resilio Sync using Docker to enable file synchronization across devices.
-
-### 8. `create_directories`
-This role creates necessary directories as specified in the configuration to organize the file system.
-
-### 9. `configure_git`
-This role configures Git settings such as `user.email` and `user.name` for version control.
-
-### 10. `update_user_dirs`
-This role updates user directory configurations, including setting up the correct locations for user directories like Downloads.
-
-### 11. `configure_gnome`
-This role configures GNOME settings to customize the desktop environment according to user preferences.
-
-### 12. `setup_flameshot`
-This role sets up Flameshot, a screenshot tool, ensuring it is installed and properly configured with custom keybindings and autostart settings.
-
-## Usage
-
-To use this playbook, run the following command in your terminal:
+Recommended checks:
 
 ```bash
-ansible-pull -U https://github.com/jonhowe/move-in-using-ansible playbook.yml --ask-become-pass --tags "install_applications,setup_docker"
+ansible-playbook --syntax-check playbook.yml
+yamllint .
+ansible-lint
 ```
-or
-```bash
-ansible-pull -U https://github.com/jonhowe/move-in-using-ansible playbook.yml --ask-become-pass --skip-tags "install_joplin,setup_flameshot"
-```
+
+## Notes
+
+- The inventory targets localhost only.
+- Adding a user to the `docker` group is effectively root-equivalent on Linux. Keep `docker_add_user_to_group` enabled only if that tradeoff is acceptable.
+- Signal still uses the vendor-provided repository stanza with `xenial`. Keep that under periodic review in case the vendor changes its supported repository format.

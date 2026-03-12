@@ -1,14 +1,28 @@
 ---
-- name: Replace $HOME/Downloads in user-dirs.dirs
+- name: Ensure user config directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ home_directory }}/.config", mode: "0755" }
+    - { path: "{{ home_directory }}/.config/gtk-3.0", mode: "0755" }
+
+- name: Update XDG Downloads directory to synced folder root
   ansible.builtin.lineinfile:
-    path: "{{ HOME_DIRECTORY }}/.config/user-dirs.dirs"
-    regexp: 'XDG_DOWNLOAD_DIR="\$HOME/Downloads"'
-    line: 'XDG_DOWNLOAD_DIR="{{ BTSYNC_FOLDER_ROOT }}"'
-    backrefs: true
+    path: "{{ home_directory }}/.config/user-dirs.dirs"
+    regexp: "^XDG_DOWNLOAD_DIR="
+    line: "XDG_DOWNLOAD_DIR=\"{{ btsync_folder_root }}\""
+    create: true
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: "0644"
 
 - name: Add entries to GTK bookmarks
   ansible.builtin.lineinfile:
-    path: "{{ HOME_DIRECTORY }}/.config/gtk-3.0/bookmarks"
+    path: "{{ home_directory }}/.config/gtk-3.0/bookmarks"
     line: "file://{{ item.path }} {{ item.name }}"
     create: true
     state: present
@@ -16,21 +30,80 @@
   loop_control:
     label: "{{ item.name }}"
 
-- name: Set the Downloads directory to the correct location
-  block:
-    - name: Check the downloads directory status
-      stat:
-        path: "{{ HOME_DIRECTORY }}/Downloads"
-      register: downloads_dir_stat
+- name: Check the Downloads path status
+  ansible.builtin.stat:
+    path: "{{ home_directory }}/Downloads"
+  register: downloads_dir_stat
 
-    - name: Remove existing Downloads directory if it is not a symlink
-      when: downloads_dir_stat.stat.exists and not downloads_dir_stat.stat.islnk
-      file:
-        path: "{{ HOME_DIRECTORY }}/Downloads"
-        state: absent
+- name: Fail when Downloads exists as a file
+  ansible.builtin.assert:
+    that:
+      - not downloads_dir_stat.stat.exists or downloads_dir_stat.stat.isdir or downloads_dir_stat.stat.islnk
+    fail_msg: >-
+      {{ home_directory }}/Downloads exists but is not a directory or symlink. Resolve it manually before rerunning the playbook.
 
-    - name: Create symlink for Downloads directory
-      ansible.builtin.file:
-        src: "{{ BTSYNC_FOLDER_ROOT }}/Downloads"
-        dest: "{{ HOME_DIRECTORY }}/Downloads"
-        state: link
+- name: Find existing items in Downloads
+  ansible.builtin.find:
+    path: "{{ home_directory }}/Downloads"
+    recurse: false
+    hidden: true
+    file_type: any
+  register: downloads_dir_contents
+  when:
+    - downloads_dir_stat.stat.exists
+    - downloads_dir_stat.stat.isdir
+    - not downloads_dir_stat.stat.islnk
+
+- name: Inform the user about Downloads migration
+  ansible.builtin.debug:
+    msg: >-
+      Moving {{ downloads_dir_contents.matched }} existing item(s) from {{ home_directory }}/Downloads to {{ btsync_folder_root }}/Downloads before replacing Downloads with a symlink.
+  when:
+    - downloads_migrate_existing | bool
+    - downloads_dir_stat.stat.exists
+    - downloads_dir_stat.stat.isdir
+    - not downloads_dir_stat.stat.islnk
+    - downloads_dir_contents.matched | default(0) > 0
+
+- name: Move existing Downloads contents into the synced folder
+  ansible.builtin.command:
+    argv:
+      - mv
+      - "{{ item.path }}"
+      - "{{ btsync_folder_root }}/Downloads/"
+  loop: "{{ downloads_dir_contents.files | default([]) }}"
+  loop_control:
+    label: "{{ item.path }}"
+  when:
+    - downloads_migrate_existing | bool
+    - downloads_dir_stat.stat.exists
+    - downloads_dir_stat.stat.isdir
+    - not downloads_dir_stat.stat.islnk
+    - downloads_dir_contents.matched | default(0) > 0
+
+- name: Fail if Downloads contains data and migration is disabled
+  ansible.builtin.assert:
+    that:
+      - downloads_dir_contents.matched | default(0) == 0
+    fail_msg: >-
+      {{ home_directory }}/Downloads contains data and downloads_migrate_existing is false. No files were deleted.
+  when:
+    - not downloads_migrate_existing | bool
+    - downloads_dir_stat.stat.exists
+    - downloads_dir_stat.stat.isdir
+    - not downloads_dir_stat.stat.islnk
+
+- name: Remove the replaced Downloads directory
+  ansible.builtin.file:
+    path: "{{ home_directory }}/Downloads"
+    state: absent
+  when:
+    - downloads_dir_stat.stat.exists
+    - downloads_dir_stat.stat.isdir
+    - not downloads_dir_stat.stat.islnk
+
+- name: Create symlink for Downloads directory
+  ansible.builtin.file:
+    src: "{{ btsync_folder_root }}/Downloads"
+    dest: "{{ home_directory }}/Downloads"
+    state: link

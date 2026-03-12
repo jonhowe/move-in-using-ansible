@@ -1,7 +1,14 @@
 ---
-- name: Set GNOME settings
-  command: gsettings set {{ item.schema }} {{ item.key }} {{ item.value }}
+- name: Ensure gsettings is available
+  ansible.builtin.command:
+    argv: ["which", "gsettings"]
+  register: gsettings_bin
+  changed_when: false
+  failed_when: gsettings_bin.rc != 0
+  environment: "{{ gui_session_environment }}"
+
+- name: Apply GNOME settings idempotently
+  ansible.builtin.include_tasks: apply_one_setting.yml
   loop: "{{ gsettings }}"
   loop_control:
-    label: "{{ item.key }}"
-  become: false
+    label: "{{ item.schema }} {{ item.key }}"

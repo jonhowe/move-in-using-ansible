@@ -1,0 +1,6 @@
+---
+# Override this in .env.yml with the vendor-published checksum when available.
+synaptics_repository_keyring_deb_checksum: ""
+
+# Source: https://www.synaptics.com/products/displaylink-graphics/downloads/ubuntu
+synaptics_repository_keyring_deb_url: "https://www.synaptics.com/sites/default/files/Ubuntu/pool/stable/main/all/synaptics-repository-keyring.deb"
