@@ -1,13 +1,13 @@
 # Ansible Playbook: Move-In Using Ansible
 
-This repository bootstraps Jon's Ubuntu workstation after login. It is intended to run on the local machine inside Jon's active GUI session, not from a headless shell.
+This repository bootstraps an Ubuntu workstation after login. It is intended to run on the local machine inside the active GUI session, not from a headless shell.
 
 ## What this playbook does
 
 - installs baseline APT packages
 - adds third-party APT repositories with `signed-by` keyrings
 - installs desktop applications from APT or Snap
-- enables Docker and optionally adds Jon to the `docker` group
+- enables Docker and optionally adds the logged-in user to the `docker` group
 - runs Resilio Sync in Docker
 - configures Git, XDG user directories, GNOME settings, and Flameshot
 - installs optional Python CLI tools with `pipx`
@@ -27,7 +27,7 @@ This repository bootstraps Jon's Ubuntu workstation after login. It is intended 
 - Ubuntu desktop session
 - `sudo` access
 - Ansible installed on the machine being configured
-- Collections from [collections/requirements.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/collections/requirements.yml)
+- Collections from [`collections/requirements.yml`](collections/requirements.yml)
 
 Install collections with:
 
@@ -37,9 +37,9 @@ ansible-galaxy collection install -r collections/requirements.yml
 
 ## Configuration
 
-Tracked defaults live in [vars/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/vars/main.yml).
+Tracked defaults live in [`vars/main.yml`](vars/main.yml).
 
-For machine-specific overrides, copy [.env.yml.example](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/.env.yml.example) to `.env.yml` and edit only the values you want to change.
+For machine-specific overrides, copy [`.env.yml.example`](.env.yml.example) to `.env.yml` and edit only the values you want to change.
 
 `.env.yml` is YAML, not dotenv syntax. That is intentional so nested Ansible variables remain easy to override.
 
@@ -72,9 +72,9 @@ ansible-playbook playbook.yml --ask-become-pass --tags "base,apps"
 - `apt_packages` installs core Ubuntu packages and the Synaptics keyring package for DisplayLink when needed
 - `install_applications` manages third-party APT repositories plus shared Snap installs
 - `install_joplin`, `install_zoom`, `install_rambox` install those apps from Snap
-- `setup_docker` starts Docker and optionally adds Jon to the `docker` group
+- `setup_docker` starts Docker and optionally adds the logged-in user to the `docker` group
 - `setup_resilio_sync` starts the Resilio Sync container
-- `create_directories` creates Jon's standard directories
+- `create_directories` creates the standard workstation directories
 - `configure_git` writes Git identity into the logged-in user's global Git config
 - `install_python_tools` installs optional user CLI tools with `pipx`
 - `update_user_dirs` sets XDG/GTK paths and safely migrates `~/Downloads`
@@ -89,6 +89,7 @@ Recommended checks:
 ansible-playbook --syntax-check playbook.yml
 yamllint .
 ansible-lint
+./tests/run.sh
 ```
 
 ## Notes

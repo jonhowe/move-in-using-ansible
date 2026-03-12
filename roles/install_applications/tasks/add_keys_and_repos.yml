@@ -15,6 +15,32 @@
     label: "{{ item.name }}"
   notify: Refresh apt cache
 
+- name: Normalize managed Signal repository keyring path
+  ansible.builtin.replace:
+    path: /etc/apt/sources.list.d/signal-desktop.list
+    regexp: '/etc/apt/keyrings/signal-desktop\.gpg'
+    replace: /etc/apt/keyrings/signal-desktop.asc
+  failed_when: false
+  notify: Refresh apt cache
+
+- name: Find legacy Signal repository source files
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d
+    patterns: "*.list"
+    contains: 'https://updates\.signal\.org/desktop/apt'
+    read_whole_file: true
+  register: signal_repository_source_files
+
+- name: Remove unmanaged legacy Signal repository source files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ signal_repository_source_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  when: item.path != '/etc/apt/sources.list.d/signal-desktop.list'
+  notify: Refresh apt cache
+
 - name: Add repositories with signed-by keyrings
   ansible.builtin.apt_repository:
     repo: >-

@@ -21,6 +21,6 @@
       max-file: "2"
     env:
       MEM_LIMIT: "{{ resilio_sync.mem_limit }}"
-      PUID: "{{ ansible_user_uid | string }}"
-      PGID: "{{ ansible_user_gid | string }}"
+      PUID: "{{ active_session_user_uid | string }}"
+      PGID: "{{ active_session_user_gid | string }}"
     cpus: "{{ resilio_sync.cpus }}"

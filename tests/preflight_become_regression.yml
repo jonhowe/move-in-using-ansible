@@ -1,0 +1,34 @@
+---
+- name: Verify preflight uses active session facts instead of escalated play facts
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars_files:
+    - ../vars/main.yml
+
+  vars:
+    ansible_user_id: root
+    ansible_user_uid: 0
+    ansible_user_gid: 0
+    ansible_env:
+      HOME: /root
+
+  tasks:
+    - name: Run preflight with desktop checks disabled for this regression test
+      ansible.builtin.include_role:
+        name: preflight
+      vars:
+        preflight_gui_required: false
+        desktop_session_required: false
+
+    - name: Assert active session facts resolve to the configured desktop user
+      ansible.builtin.assert:
+        that:
+          - active_session_user_id == user
+          - active_session_env.HOME == home_directory
+          - active_session_user_uid != 0
+          - active_session_user_gid != 0
+        fail_msg: >-
+          Preflight should resolve the desktop user's session details even when the
+          current play's facts look like they were gathered as root.

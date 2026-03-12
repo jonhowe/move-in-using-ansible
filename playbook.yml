@@ -24,12 +24,9 @@
       vars:
         preflight_gui_required: true
       tags: ["always"]
-    - { role: apt_packages, tags: ["base", "apps"] }
     - { role: install_applications, tags: ["base", "apps"] }
+    - { role: apt_packages, tags: ["base", "apps"] }
     - { role: setup_docker, tags: ["docker"] }
-    - { role: install_joplin, tags: ["apps"] }
-    - { role: install_zoom, tags: ["apps"] }
-    - { role: install_rambox, tags: ["apps"] }
     - { role: setup_resilio_sync, tags: ["apps"] }
 
 - name: Apply logged-in user GUI customization

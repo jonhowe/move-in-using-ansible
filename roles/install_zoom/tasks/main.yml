@@ -1,7 +1,0 @@
----
-- name: Install Zoom
-  community.general.snap:
-    name: "{{ zoom.snap_name }}"
-    classic: "{{ zoom.classic }}"
-    channel: "{{ zoom.channel }}"
-  when: zoom.enabled | bool and zoom.install_method == "snap"

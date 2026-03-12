@@ -1,6 +1,6 @@
-user: jhowe
-group: jhowe
-home_directory: /home/jhowe
+user: "{{ lookup('ansible.builtin.env', 'USER') }}"
+group: "{{ lookup('ansible.builtin.env', 'USER') }}"
+home_directory: "{{ lookup('ansible.builtin.env', 'HOME') }}"
 tempdir: /tmp
 
 desktop_session_required: true
@@ -49,7 +49,7 @@ apt_packages:
 pipx_packages: []
 
 directories:
-  - "{{ btsync_folder_root }}/britt-jon"
+  - "{{ btsync_folder_root }}/shared"
   - "{{ btsync_folder_root }}/DCIM"
   - "{{ btsync_folder_root }}/Images"
   - "{{ btsync_folder_root }}/Downloads"
@@ -120,26 +120,25 @@ keybindings:
   - key: /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/binding
     value: "'Print'"
 
-git_user_name: Jon Howe
-git_user_email: howe.jon@gmail.com
+git_user_name: Example User
+git_user_email: user@example.com
 
-joplin:
-  enabled: true
-  install_method: snap
-  snap_name: joplin-desktop
-  classic: false
-  channel: stable
-
-zoom:
-  enabled: true
-  install_method: snap
-  snap_name: zoom-client
-  classic: false
-  channel: stable
-
-rambox:
-  enabled: true
-  install_method: snap
-  snap_name: rambox
-  classic: false
-  channel: stable
+optional_snap_applications:
+  - name: joplin
+    enabled: true
+    install_method: snap
+    snap_name: joplin-desktop
+    classic: false
+    channel: stable
+  - name: zoom
+    enabled: true
+    install_method: snap
+    snap_name: zoom-client
+    classic: false
+    channel: stable
+  - name: rambox
+    enabled: true
+    install_method: snap
+    snap_name: rambox
+    classic: false
+    channel: stable

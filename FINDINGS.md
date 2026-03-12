@@ -2,7 +2,7 @@
 
 ## Current state
 
-This repository has been remediated from the earlier review and now follows a safer structure for Jon's Ubuntu desktop bootstrap workflow.
+This repository has been remediated from the earlier review and now follows a safer structure for an Ubuntu desktop bootstrap workflow.
 
 The most important changes already applied are:
 
@@ -16,10 +16,10 @@ The most important changes already applied are:
 
 ## Files that define the new execution model
 
-- [playbook.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/playbook.yml)
-- [roles/preflight/tasks/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/roles/preflight/tasks/main.yml)
-- [vars/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/vars/main.yml)
-- [.env.yml.example](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/.env.yml.example)
+- [`playbook.yml`](playbook.yml)
+- [`roles/preflight/tasks/main.yml`](roles/preflight/tasks/main.yml)
+- [`vars/main.yml`](vars/main.yml)
+- [`.env.yml.example`](.env.yml.example)
 
 ## What was remediated
 
@@ -38,9 +38,9 @@ Changes:
 - GUI-sensitive tasks now use a constructed `gui_session_environment`.
 
 Primary references:
-- [playbook.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/playbook.yml)
-- [roles/preflight/tasks/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/roles/preflight/tasks/main.yml)
-- [roles/configure_gnome/tasks/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/roles/configure_gnome/tasks/main.yml)
+- [`playbook.yml`](playbook.yml)
+- [`roles/preflight/tasks/main.yml`](roles/preflight/tasks/main.yml)
+- [`roles/configure_gnome/tasks/main.yml`](roles/configure_gnome/tasks/main.yml)
 
 ### 2. Override mechanism for machine-specific values
 
@@ -53,8 +53,8 @@ Changes:
 - `.env.yml.example` documents the supported override pattern.
 
 Primary references:
-- [.env.yml.example](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/.env.yml.example)
-- [.gitignore](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/.gitignore)
+- [`.env.yml.example`](.env.yml.example)
+- [`.gitignore`](.gitignore)
 
 ### 3. Python tooling
 
@@ -67,8 +67,8 @@ Changes:
 - Optional Python CLI tools are managed through `community.general.pipx`.
 
 Primary references:
-- [vars/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/vars/main.yml)
-- [roles/install_python_tools/tasks/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/roles/install_python_tools/tasks/main.yml)
+- [`vars/main.yml`](vars/main.yml)
+- [`roles/install_python_tools/tasks/main.yml`](roles/install_python_tools/tasks/main.yml)
 
 ### 4. Downloads safety
 
@@ -82,7 +82,7 @@ Changes:
 - Only after migration or empty-directory confirmation does the symlink get created.
 
 Primary references:
-- [roles/update_user_dirs/tasks/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/roles/update_user_dirs/tasks/main.yml)
+- [`roles/update_user_dirs/tasks/main.yml`](roles/update_user_dirs/tasks/main.yml)
 
 ### 5. Ansible configuration hygiene
 
@@ -96,7 +96,7 @@ Changes:
 - Kept the config minimal and local-safe.
 
 Primary references:
-- [ansible.cfg](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/ansible.cfg)
+- [`ansible.cfg`](ansible.cfg)
 
 ### 6. Remote installer risk
 
@@ -108,9 +108,9 @@ Changes:
 - Those apps are now installed through Snap roles with configurable settings in `vars/main.yml` or `.env.yml`.
 
 Primary references:
-- [roles/install_joplin/tasks/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/roles/install_joplin/tasks/main.yml)
-- [roles/install_zoom/tasks/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/roles/install_zoom/tasks/main.yml)
-- [roles/install_rambox/tasks/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/roles/install_rambox/tasks/main.yml)
+- [`roles/install_joplin/tasks/main.yml`](roles/install_joplin/tasks/main.yml)
+- [`roles/install_zoom/tasks/main.yml`](roles/install_zoom/tasks/main.yml)
+- [`roles/install_rambox/tasks/main.yml`](roles/install_rambox/tasks/main.yml)
 
 ## Remaining risks and follow-up work
 
@@ -120,7 +120,7 @@ Status:
 - Open
 
 Evidence:
-- [vars/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/vars/main.yml#L53) still uses `resilio/sync` without an immutable tag or digest.
+- [`vars/main.yml`](vars/main.yml#L53) still uses `resilio/sync` without an immutable tag or digest.
 
 Why it matters:
 - Container provenance and reproducibility are still weaker than ideal.
@@ -135,7 +135,7 @@ Status:
 - Open
 
 Evidence:
-- [roles/apt_packages/defaults/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/roles/apt_packages/defaults/main.yml#L2) exposes `synaptics_repository_keyring_deb_checksum`, but the default is empty.
+- [`roles/apt_packages/defaults/main.yml`](roles/apt_packages/defaults/main.yml#L2) exposes `synaptics_repository_keyring_deb_checksum`, but the default is empty.
 
 Why it matters:
 - The task can verify integrity, but only if a trusted checksum is supplied.
@@ -149,7 +149,7 @@ Status:
 - Open
 
 Evidence:
-- [vars/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/vars/main.yml#L126) defines Joplin, Zoom, and Rambox through Snap channels rather than explicit versions.
+- [`vars/main.yml`](vars/main.yml#L126) defines Joplin, Zoom, and Rambox through Snap channels rather than explicit versions.
 
 Why it matters:
 - This is safer than raw script or `.deb` downloads, but it is not fully reproducible.
@@ -163,7 +163,7 @@ Status:
 - Open
 
 Evidence:
-- [vars/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/vars/main.yml#L14) still uses the vendor repository format with `xenial`.
+- [`vars/main.yml`](vars/main.yml#L14) still uses the vendor repository format with `xenial`.
 
 Why it matters:
 - It may still be valid, but it should be periodically re-checked against current vendor guidance.
@@ -174,14 +174,14 @@ Status:
 - Open by design
 
 Evidence:
-- [vars/main.yml](/home/jhowe/move-in-using-ansible-main-updated-reviewed-fixed3/move-in-using-ansible-main/vars/main.yml#L8) defaults `docker_add_user_to_group: true`.
+- [`vars/main.yml`](vars/main.yml#L8) defaults `docker_add_user_to_group: true`.
 
 Why it matters:
 - Local Docker group membership is effectively root-equivalent.
 
 Recommended future remediation:
 - Leave it configurable.
-- Disable it in `.env.yml` if Jon prefers stricter host security.
+- Disable it in `.env.yml` if stricter host security is preferred.
 
 ## Recommended next remediation order
 

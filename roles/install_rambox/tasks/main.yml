@@ -1,7 +1,0 @@
----
-- name: Install Rambox
-  community.general.snap:
-    name: "{{ rambox.snap_name }}"
-    classic: "{{ rambox.classic }}"
-    channel: "{{ rambox.channel }}"
-  when: rambox.enabled | bool and rambox.install_method == "snap"
