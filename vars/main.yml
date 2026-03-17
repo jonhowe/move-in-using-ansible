@@ -31,6 +31,8 @@ apt_packages:
   - vim
   - tilda
   - gnome-terminal
+  - nodejs
+  - npm
   - docker.io
   - docker-compose
   - curl
@@ -49,6 +51,9 @@ apt_packages:
   - python3-psutil
 
 pipx_packages: []
+
+npm_global_packages:
+  - "@openai/codex"
 
 directories:
   - "{{ btsync_folder_root }}/shared"
