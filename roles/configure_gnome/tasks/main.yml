@@ -7,6 +7,16 @@
   failed_when: gsettings_bin.rc != 0
   environment: "{{ gui_session_environment }}"
 
+- name: Manage GNOME favorite apps
+  ansible.builtin.include_tasks: manage_favorite_apps.yml
+  when:
+    - (gnome_favorite_apps_remove | default([])) | length > 0
+      or (gnome_favorite_apps_add | default([])) | length > 0
+
+- name: Manage GNOME Terminal profile settings
+  ansible.builtin.include_tasks: manage_terminal_profile.yml
+  when: (gnome_terminal_profile_settings | default([])) | length > 0
+
 - name: Apply GNOME settings idempotently
   ansible.builtin.include_tasks: apply_one_setting.yml
   loop: "{{ gsettings }}"
