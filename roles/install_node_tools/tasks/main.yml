@@ -1,0 +1,8 @@
+---
+- name: Install npm-managed global CLI tools
+  community.general.npm:
+    name: "{{ item }}"
+    global: true
+    state: present
+  loop: "{{ npm_global_packages }}"
+  when: npm_global_packages | length > 0

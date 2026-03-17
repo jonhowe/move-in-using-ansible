@@ -26,6 +26,7 @@
       tags: ["always"]
     - { role: install_applications, tags: ["base", "apps"] }
     - { role: apt_packages, tags: ["base", "apps"] }
+    - { role: install_node_tools, tags: ["base", "apps"] }
     - { role: setup_docker, tags: ["docker"] }
     - { role: setup_resilio_sync, tags: ["apps"] }
 
