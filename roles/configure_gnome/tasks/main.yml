@@ -17,6 +17,9 @@
   ansible.builtin.include_tasks: manage_terminal_profile.yml
   when: (gnome_terminal_profile_settings | default([])) | length > 0
 
+- name: Manage Ghostty settings
+  ansible.builtin.include_tasks: manage_ghostty.yml
+
 - name: Apply GNOME settings idempotently
   ansible.builtin.include_tasks: apply_one_setting.yml
   loop: "{{ gsettings }}"

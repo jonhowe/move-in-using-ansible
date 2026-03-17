@@ -1,0 +1,78 @@
+---
+- name: Check whether Ghostty binary is available
+  ansible.builtin.command:
+    argv: ["which", "ghostty"]
+  register: ghostty_binary
+  changed_when: false
+  failed_when: false
+  environment: "{{ gui_session_environment }}"
+
+- name: Check whether Ghostty desktop entry is available
+  ansible.builtin.find:
+    paths:
+      - "{{ home_directory }}/.local/share/applications"
+      - /usr/local/share/applications
+      - /usr/share/applications
+      - /var/lib/snapd/desktop/applications
+    patterns: "{{ ghostty_desktop_ids }}"
+    file_type: file
+    recurse: false
+  register: ghostty_desktop_files
+
+- name: Cache Ghostty availability
+  ansible.builtin.set_fact:
+    ghostty_installed: "{{ ghostty_binary.rc == 0 or (ghostty_desktop_files.matched | int) > 0 }}"
+
+- name: Ensure Ghostty config directory exists
+  ansible.builtin.file:
+    path: "{{ home_directory }}/.config/ghostty"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: "0755"
+  when: ghostty_installed
+
+- name: Write Ghostty config
+  ansible.builtin.copy:
+    dest: "{{ home_directory }}/.config/ghostty/config"
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: "0644"
+    content: |
+      foreground = {{ ghostty_config.foreground }}
+      background = {{ ghostty_config.background }}
+      background-opacity = {{ ghostty_config.background_opacity }}
+      background-opacity-cells = {{ ghostty_config.background_opacity_cells }}
+  when: ghostty_installed
+
+- name: Read current default terminal command
+  ansible.builtin.command:
+    argv: ["gsettings", "get", "org.gnome.desktop.default-applications.terminal", "exec"]
+  register: current_terminal_exec
+  changed_when: false
+  environment: "{{ gui_session_environment }}"
+  when: ghostty_installed
+
+- name: Set Ghostty as the default terminal command
+  ansible.builtin.command:
+    argv: ["gsettings", "set", "org.gnome.desktop.default-applications.terminal", "exec", "'ghostty'"]
+  when:
+    - ghostty_installed
+    - (current_terminal_exec.stdout | trim) != "'ghostty'"
+  environment: "{{ gui_session_environment }}"
+
+- name: Read current default terminal exec arg
+  ansible.builtin.command:
+    argv: ["gsettings", "get", "org.gnome.desktop.default-applications.terminal", "exec-arg"]
+  register: current_terminal_exec_arg
+  changed_when: false
+  environment: "{{ gui_session_environment }}"
+  when: ghostty_installed
+
+- name: Set Ghostty as the default terminal exec arg
+  ansible.builtin.command:
+    argv: ["gsettings", "set", "org.gnome.desktop.default-applications.terminal", "exec-arg", "'-e'"]
+  when:
+    - ghostty_installed
+    - (current_terminal_exec_arg.stdout | trim) != "'-e'"
+  environment: "{{ gui_session_environment }}"
