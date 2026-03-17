@@ -18,6 +18,7 @@ applications:
 snaps_classic:
   - code
   - powershell
+  - ghostty
 
 snaps_regular:
   - brave
@@ -29,6 +30,7 @@ snaps_regular:
 apt_packages:
   - vim
   - tilda
+  - gnome-terminal
   - docker.io
   - docker-compose
   - curl
@@ -133,6 +135,17 @@ gnome_terminal_profile_settings:
     value: "8"
   - key: background-color
     value: "'rgb(24,28,34)'"
+
+ghostty_config:
+  foreground: e6eaee
+  background: 181c22
+  background_opacity: "0.92"
+  background_opacity_cells: "true"
+
+ghostty_desktop_ids:
+  - com.mitchellh.ghostty.desktop
+  - ghostty.desktop
+  - ghostty_ghostty.desktop
 
 flameshot_command: "flameshot gui -p {{ btsync_root }}/folders/Sync/Screenshots/"
 
