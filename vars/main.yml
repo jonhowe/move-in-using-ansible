@@ -106,6 +106,34 @@ gsettings:
     key: secondary-color
     value: "'#000000'"
 
+gnome_favorite_apps_remove:
+  - firefox.desktop
+  - firefox_firefox.desktop
+  - yelp.desktop
+  - org.gnome.Help.desktop
+  - org.gnome.Software.desktop
+  - snap-store_snap-store.desktop
+  - ubuntu-app-center_ubuntu-app-center.desktop
+
+gnome_favorite_apps_add:
+  - name: brave
+    desktop_ids:
+      - brave_brave.desktop
+      - brave-browser.desktop
+      - brave.desktop
+
+gnome_terminal_profile_settings:
+  - key: use-theme-colors
+    value: "false"
+  - key: foreground-color
+    value: "'rgb(230,234,238)'"
+  - key: use-transparent-background
+    value: "true"
+  - key: background-transparency-percent
+    value: "8"
+  - key: background-color
+    value: "'rgb(24,28,34)'"
+
 flameshot_command: "flameshot gui -p {{ btsync_root }}/folders/Sync/Screenshots/"
 
 keybindings:

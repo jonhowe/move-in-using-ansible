@@ -1,0 +1,55 @@
+---
+- name: Read current GNOME favorite apps
+  ansible.builtin.command:
+    argv: ["gsettings", "get", "org.gnome.shell", "favorite-apps"]
+  register: current_favorite_apps_raw
+  changed_when: false
+  environment: "{{ gui_session_environment }}"
+
+- name: Parse current GNOME favorite apps
+  ansible.builtin.set_fact:
+    current_favorite_apps: "{{ current_favorite_apps_raw.stdout | trim | from_yaml }}"
+
+- name: Initialize desired GNOME favorite apps
+  ansible.builtin.set_fact:
+    desired_favorite_apps: "{{ current_favorite_apps | select('match', '^[^/]+\\.desktop$') | list }}"
+
+- name: Remove unwanted GNOME favorite apps
+  ansible.builtin.set_fact:
+    desired_favorite_apps: "{{ desired_favorite_apps | reject('in', gnome_favorite_apps_remove | default([])) | list }}"
+
+- name: Resolve desktop file candidates for requested GNOME favorite apps
+  ansible.builtin.find:
+    paths:
+      - "{{ home_directory }}/.local/share/applications"
+      - /var/lib/snapd/desktop/applications
+      - /usr/local/share/applications
+      - /usr/share/applications
+    patterns: "{{ item.desktop_ids | default([item]) }}"
+    file_type: file
+    recurse: false
+  register: favorite_app_candidates
+  loop: "{{ gnome_favorite_apps_add | default([]) }}"
+  loop_control:
+    label: "{{ item.name | default(item) }}"
+
+- name: Append resolved GNOME favorite apps
+  ansible.builtin.set_fact:
+    desired_favorite_apps: "{{ desired_favorite_apps + ([resolved_desktop_id] if resolved_desktop_id not in desired_favorite_apps else []) }}"
+  vars:
+    resolved_desktop_id: "{{ (item.files | map(attribute='path') | map('basename') | list | first) }}"
+  when: item.matched | int > 0
+  loop: "{{ favorite_app_candidates.results }}"
+  loop_control:
+    label: "{{ item.item.name | default(item.item) }}"
+
+- name: Set GNOME favorite apps when different
+  ansible.builtin.command:
+    argv:
+      - gsettings
+      - set
+      - org.gnome.shell
+      - favorite-apps
+      - "{{ desired_favorite_apps | to_json }}"
+  when: desired_favorite_apps != current_favorite_apps
+  environment: "{{ gui_session_environment }}"

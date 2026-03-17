@@ -1,0 +1,21 @@
+---
+- name: Read default GNOME Terminal profile ID
+  ansible.builtin.command:
+    argv: ["gsettings", "get", "org.gnome.Terminal.ProfilesList", "default"]
+  register: default_terminal_profile_raw
+  changed_when: false
+  environment: "{{ gui_session_environment }}"
+
+- name: Cache default GNOME Terminal profile path
+  ansible.builtin.set_fact:
+    gnome_terminal_profile_id: "{{ default_terminal_profile_raw.stdout | trim | trim(\"'\") }}"
+    gnome_terminal_profile_dconf_path: "/org/gnome/terminal/legacy/profiles:/:{{ default_terminal_profile_raw.stdout | trim | trim(\"'\") }}/"
+
+- name: Apply GNOME Terminal profile settings
+  community.general.dconf:
+    key: "{{ gnome_terminal_profile_dconf_path }}{{ item.key }}"
+    value: "{{ item.value }}"
+  loop: "{{ gnome_terminal_profile_settings }}"
+  loop_control:
+    label: "{{ item.key }}"
+  environment: "{{ gui_session_environment }}"
