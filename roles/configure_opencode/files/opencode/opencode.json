@@ -1,0 +1,147 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "agent": {
+    "build": {
+        "mode": "primary",
+        "model": "litellm/GPT-5",
+        "tools": {
+            "write": true,
+            "edit": true,
+            "bash": true    
+        }
+    },
+    "plan": {
+        "mode": "primary",
+        "model": "litellm/GPT-5",
+        "tools": {
+            "write": false,
+            "edit": false,
+            "bash": false
+        }
+    },
+    "code-reviewer": {
+        "description": "Reviews code for best practices and potential issues",
+        "mode": "subagent",
+        "model": "xai/grok-4-1-fast-reasoning",
+        "prompt": "You are a code reviewer. Focus on security, performance, and maintainability.",
+        "tools": {
+            "write": false,
+            "edit": false   
+        }
+    }
+    },
+    "plugin": ["@ramtinj95/opencode-tokenscope"],
+    "provider": {
+    "litellm": {
+        "npm": "@ai-sdk/openai-compatible",
+        "name": "LiteLLM",
+        "options": {
+        "baseURL": "http://192.168.1.106:4001/v1"
+        },
+        "models": {
+        "GPT-5": {
+            "name": "GPT-5",
+            "cost": {
+            "input": 0.00003,
+            "output": 0.00012
+            },
+            "limit": {
+            "context": 128000,
+            "output": 16000
+            }
+        },
+        "GPT-5 nano": {
+            "name": "GPT-5 Nano",
+            "cost": {
+            "input": 0.000004,
+            "output": 0.000016
+            },
+            "limit": {
+            "context": 128000,
+            "output": 4096
+            }
+        },
+        "GPT-5 mini": {
+            "name": "GPT-5 Mini",
+            "cost": {
+            "input": 0.00001,
+            "output": 0.000004
+            },
+            "limit": {
+            "context": 128000,
+            "output": 16000
+            }
+        },
+        "xai/grok-4-1-fast": {
+            "name": "Grok 4.1 Fast",
+            "cost": {
+            "input": 0.000002,
+            "output": 0.000010
+            },
+            "limit": {
+            "context": 128000,
+            "output": 8192
+            }
+        },
+        "xai/grok-4-1-fast-reasoning": {
+            "name": "Grok 4.1 Fast Reasoning",
+            "cost": {
+            "input": 0.000005,
+            "output": 0.000020
+            },
+            "limit": {
+            "context": 128000,
+            "output": 16000
+            }
+        },
+        "xai/grok-4": {
+            "name": "Grok 4",
+            "cost": {
+            "input": 0.00002,
+            "output": 0.00008
+            },
+            "limit": {
+            "context": 128000,
+            "output": 16000
+            }
+        },
+        "Haiku 4.5": {
+            "name": "Haiku 4.5",
+            "cost": {
+            "input": 0.00008,
+            "output": 0.0004
+            },
+            "limit": {
+            "context": 200000,
+            "output": 4096
+            }
+        },
+        "Sonnet 4.6": {
+            "name": "Sonnet 4.6",
+            "cost": {
+            "input": 0.003,
+            "output": 0.015
+            },
+            "limit": {
+            "context": 200000,
+            "output": 16000
+            }
+        },
+        "Opus 4.6": {
+            "name": "Opus 4.6",
+            "cost": {
+            "input": 0.015,
+            "output": 0.075
+            },
+            "limit": {
+            "context": 200000,
+            "output": 16000
+            }
+        },
+        "hailo-deepseek-r1-1p5b": {
+            "name": "Hailo DeepSeek R1 1.5B"
+        }
+        }
+    }
+    }
+}

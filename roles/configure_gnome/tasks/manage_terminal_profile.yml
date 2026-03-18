@@ -17,7 +17,8 @@
 - name: Cache default GNOME Terminal profile path
   ansible.builtin.set_fact:
     gnome_terminal_profile_id: "{{ default_terminal_profile_raw.stdout | trim | trim(\"'\") }}"
-    gnome_terminal_profile_dconf_path: "/org/gnome/terminal/legacy/profiles:/:{{ default_terminal_profile_raw.stdout | trim | trim(\"'\") }}/"
+    gnome_terminal_profile_dconf_path: "/org/gnome/terminal/legacy/profiles:/:{{ default_terminal_profile_raw.stdout
+      | trim | trim(\"'\") }}/"
   when: "'org.gnome.Terminal.ProfilesList' in available_gsettings_schemas.stdout_lines"
 
 - name: Apply GNOME Terminal profile settings

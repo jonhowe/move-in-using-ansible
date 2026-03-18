@@ -57,7 +57,8 @@
 - name: Inform the user about Downloads migration
   ansible.builtin.debug:
     msg: >-
-      Moving {{ downloads_dir_contents.matched }} existing item(s) from {{ home_directory }}/Downloads to {{ btsync_folder_root }}/Downloads before replacing Downloads with a symlink.
+      Moving {{ downloads_dir_contents.matched }} existing item(s) from
+        {{ home_directory }}/Downloads to {{ btsync_folder_root }}/Downloads before replacing Downloads with a symlink.
   when:
     - downloads_migrate_existing | bool
     - downloads_dir_stat.stat.exists
