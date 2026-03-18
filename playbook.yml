@@ -24,11 +24,12 @@
       vars:
         preflight_gui_required: true
       tags: ["always"]
-    - { role: install_applications, tags: ["base", "apps"] }
-    - { role: apt_packages, tags: ["base", "apps"] }
-    - { role: install_node_tools, tags: ["base", "apps"] }
-    - { role: setup_docker, tags: ["docker"] }
-    - { role: setup_resilio_sync, tags: ["apps"] }
+    - {role: preflight, tags: ["always"], vars: {preflight_gui_required: true}}
+    - {role: install_applications, tags: ["base", "apps"]}
+    - {role: apt_packages, tags: ["base", "apps"]}
+    - {role: install_node_tools, tags: ["base", "apps"]}
+    - {role: setup_docker, tags: ["docker"]}
+    - {role: setup_resilio_sync, tags: ["apps"]}
 
 - name: Apply logged-in user GUI customization
   hosts: localhost
@@ -55,9 +56,10 @@
       vars:
         preflight_gui_required: true
       tags: ["always"]
-    - { role: create_directories, tags: ["base"] }
-    - { role: configure_git, tags: ["base"] }
-    - { role: install_python_tools, tags: ["base", "apps"] }
-    - { role: update_user_dirs, tags: ["base"] }
-    - { role: configure_gnome, tags: ["customization"] }
-    - { role: setup_flameshot, tags: ["apps", "customization"] }
+    - {role: create_directories, tags: ["base"]}
+    - {role: configure_git, tags: ["base"]}
+    - {role: install_python_tools, tags: ["base", "apps"]}
+    - {role: configure_opencode, tags: ["base", "apps"]}
+    - {role: update_user_dirs, tags: ["base"]}
+    - {role: configure_gnome, tags: ["customization"]}
+    - {role: setup_flameshot, tags: ["apps", "customization"]}

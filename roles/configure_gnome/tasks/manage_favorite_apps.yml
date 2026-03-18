@@ -35,7 +35,8 @@
 
 - name: Append resolved GNOME favorite apps
   ansible.builtin.set_fact:
-    desired_favorite_apps: "{{ desired_favorite_apps + ([resolved_desktop_id] if resolved_desktop_id not in desired_favorite_apps else []) }}"
+    desired_favorite_apps: "{{ desired_favorite_apps + ([resolved_desktop_id] if resolved_desktop_id not in
+      desired_favorite_apps else []) }}"
   vars:
     resolved_desktop_id: "{{ (item.files | map(attribute='path') | map('basename') | list | first) }}"
   when: item.matched | int > 0

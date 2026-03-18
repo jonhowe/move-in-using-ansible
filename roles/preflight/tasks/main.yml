@@ -47,7 +47,8 @@
 - name: Assert a GUI session is present when desktop tasks are enabled
   ansible.builtin.assert:
     that:
-      - not (desktop_session_required | bool and preflight_gui_required | bool) or active_session_env.DISPLAY is defined or active_session_env.WAYLAND_DISPLAY is defined
+      - not (desktop_session_required | bool and preflight_gui_required | bool) or active_session_env.DISPLAY
+          is defined or active_session_env.WAYLAND_DISPLAY is defined
       - not (desktop_session_required | bool and preflight_gui_required | bool) or active_session_env.XDG_RUNTIME_DIR is defined
     fail_msg: >-
       This playbook only supports a logged-in GUI session. Launch it from the active desktop session, not a headless shell.
@@ -59,11 +60,14 @@
         {
           'HOME': home_directory,
           'XDG_RUNTIME_DIR': active_session_env.XDG_RUNTIME_DIR,
-          'DBUS_SESSION_BUS_ADDRESS': active_session_env.DBUS_SESSION_BUS_ADDRESS | default('unix:path=' ~ active_session_env.XDG_RUNTIME_DIR ~ '/bus')
+          'DBUS_SESSION_BUS_ADDRESS': active_session_env.DBUS_SESSION_BUS_ADDRESS
+            | default('unix:path=' ~ active_session_env.XDG_RUNTIME_DIR ~ '/bus')
         }
         | combine((active_session_env.DISPLAY is defined) | ternary({'DISPLAY': active_session_env.DISPLAY}, {}))
-        | combine((active_session_env.WAYLAND_DISPLAY is defined) | ternary({'WAYLAND_DISPLAY': active_session_env.WAYLAND_DISPLAY}, {}))
-        | combine((active_session_env.XDG_CURRENT_DESKTOP is defined) | ternary({'XDG_CURRENT_DESKTOP': active_session_env.XDG_CURRENT_DESKTOP}, {}))
+        | combine((active_session_env.WAYLAND_DISPLAY is defined)
+        | ternary({'WAYLAND_DISPLAY': active_session_env.WAYLAND_DISPLAY}, {}))
+        | combine((active_session_env.XDG_CURRENT_DESKTOP is defined)
+        | ternary({'XDG_CURRENT_DESKTOP': active_session_env.XDG_CURRENT_DESKTOP}, {}))
       }}
   when:
     - desktop_session_required | bool

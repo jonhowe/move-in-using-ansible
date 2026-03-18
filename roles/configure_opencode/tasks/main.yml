@@ -1,0 +1,42 @@
+---
+- name: Ensure opencode config directory exists
+  ansible.builtin.file:
+    path: "{{ home_directory }}/.config/opencode"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: "0755"
+
+- name: Ensure opencode command directory exists
+  ansible.builtin.file:
+    path: "{{ home_directory }}/.config/opencode/command"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: "0755"
+
+- name: Install opencode CLI
+  ansible.builtin.shell: curl -fsSL https://opencode.ai/install | bash
+  args:
+    executable: /bin/bash
+    chdir: "{{ home_directory }}"
+    creates: "{{ home_directory }}/.config/opencode/package.json"
+
+- name: Deploy opencode.json
+  ansible.builtin.copy:
+    src: opencode/opencode.json
+    dest: "{{ home_directory }}/.config/opencode/opencode.json"
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: "0644"
+    force: false
+
+- name: Deploy opencode commands
+  ansible.builtin.copy:
+    src: opencode/command/
+    dest: "{{ home_directory }}/.config/opencode/command/"
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: "0644"
+    directory_mode: "0755"
+    force: false

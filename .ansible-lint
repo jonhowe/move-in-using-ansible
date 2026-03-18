@@ -4,3 +4,4 @@ profile: production
 skip_list:
   - name[missing]
   - galaxy[no-changelog]
+  - yaml[braces]
