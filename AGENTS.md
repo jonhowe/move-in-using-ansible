@@ -1,161 +1,197 @@
 # Repository Guidelines
 
-## Project Overview
+## Overview
+This repository bootstraps an Ubuntu workstation with Ansible.
+It is meant to run on `localhost` from an active GUI session after login.
+The `preflight` role enforces the local Ubuntu + GUI-session assumptions.
 
-This repository is an Ansible workstation bootstrap for `localhost` on Ubuntu Desktop. It is designed to run inside an active GUI session, not a headless shell. The playbook enforces this via `preflight` checks tagged `always`.
+`playbook.yml` has two plays:
+1. System configuration with `become: true`
+2. Logged-in user customization with `become: false`
 
-Two plays in `playbook.yml`:
-1. **System play** (`become: true`): APT packages, repos, Snaps, Docker, Resilio Sync.
-2. **User play** (`become: false`): directories, Git config, Python/Node tools, GNOME settings, Flameshot.
+## Rule Sources
+- Primary instructions for coding agents live in this `AGENTS.md`.
+- No `.cursor/rules/` directory was found.
+- No `.cursorrules` file was found.
+- No `.github/copilot-instructions.md` file was found.
 
-## Project Structure
-
-```
-playbook.yml                  # Entry point; two plays (system + user GUI)
-vars/main.yml                 # Repo-wide tracked defaults; override via .env.yml
-.env.yml.example              # Template for untracked machine-local overrides
-collections/requirements.yml  # community.general + community.docker
-.ansible-lint                 # production profile; skips name[missing], galaxy[no-changelog]
-.yamllint                     # extends default; 140-char line max; truthy disabled
-ansible.cfg                   # Local inventory, retry disabled, auto Python
-inventory                     # [localhost] 127.0.0.1 ansible_connection=local
+## Repository Layout
+```text
+playbook.yml
+vars/main.yml
+.env.yml.example
+ansible.cfg
+inventory
+collections/requirements.yml
+.ansible-lint
+.yamllint
 tests/
-  run.sh                      # Runs all test playbooks
+  run.sh
   preflight_become_regression.yml
 roles/
-  preflight/                  # Assert Ubuntu local GUI; build gui_session_environment
-  install_applications/       # Third-party APT repos + Snap installs
-  apt_packages/               # Core APT packages; Synaptics keyring inline
-  install_node_tools/         # npm global packages
-  setup_docker/               # Enable Docker service; optionally add user to group
-  setup_resilio_sync/         # Run Resilio Sync container via community.docker
-  create_directories/         # Create standard workstation dirs
-  configure_git/              # Write global Git identity
-  install_python_tools/       # pipx packages
-  update_user_dirs/           # XDG dirs, GTK bookmarks, safe Downloads symlink
-  configure_gnome/            # gsettings, dconf, Ghostty config, terminal profile
-  setup_flameshot/            # Wayland launcher, autostart desktop file, keybindings
-  install_displaylink_repo/   # Legacy standalone role (superseded; not in playbook.yml)
+  preflight/
+  apt_packages/
+  install_applications/
+  install_node_tools/
+  setup_docker/
+  setup_resilio_sync/
+  create_directories/
+  configure_git/
+  install_python_tools/
+  configure_opencode/
+  update_user_dirs/
+  configure_gnome/
+  setup_flameshot/
+  install_displaylink_repo/
 ```
 
-## Build, Lint, and Test Commands
+## Commands
+There is no compile/build step.
+Validation is collection install, syntax check, lint, and test execution.
 
-Install required collections (once, or after changing `collections/requirements.yml`):
+Install collections:
 ```bash
 ansible-galaxy collection install -r collections/requirements.yml
 ```
 
-Validate syntax:
+Syntax-check the main playbook:
 ```bash
 ansible-playbook --syntax-check playbook.yml
 ```
 
-Lint YAML formatting:
+Lint YAML:
 ```bash
 yamllint .
 ```
 
-Lint Ansible roles and playbooks:
+Lint Ansible:
 ```bash
 ansible-lint
 ```
 
-Run all regression tests:
+Run all tests:
 ```bash
 ./tests/run.sh
 ```
 
-Run a single test playbook directly:
+Run a single test:
 ```bash
-ANSIBLE_ROLES_PATH=$(pwd)/roles ansible-playbook tests/preflight_become_regression.yml
+ANSIBLE_ROLES_PATH="$PWD/roles" ansible-playbook tests/preflight_become_regression.yml
 ```
 
-Execute the full workstation setup:
+Syntax-check a single test:
+```bash
+ANSIBLE_ROLES_PATH="$PWD/roles" ansible-playbook --syntax-check tests/preflight_become_regression.yml
+```
+
+Run the full workstation bootstrap:
 ```bash
 ansible-playbook playbook.yml --ask-become-pass
 ```
 
-Run only specific tags (e.g., base packages and apps without Docker/customization):
+Run selected tags:
 ```bash
 ansible-playbook playbook.yml --ask-become-pass --tags "base,apps"
 ```
 
-**Before opening a PR, always run:** `ansible-playbook --syntax-check playbook.yml`, `yamllint .`, `ansible-lint`, and `./tests/run.sh`.
-
-## Coding Style & Naming Conventions
-
-### YAML Formatting
-- Two-space indentation throughout.
-- Maximum line length: 140 characters (enforced by `yamllint`).
-- Start every file with `---`.
-- Use block style for multi-line strings; avoid `>-` unless collapsing a long `fail_msg`.
-- Do not quote boolean values (`true`/`false`) — `truthy` rule is disabled.
-
-### Task Names
-- Every task must have a `name` (except bare `import_tasks` calls, which skip `name[missing]`).
-- Start names with an imperative verb: `Ensure`, `Install`, `Configure`, `Add`, `Remove`, `Read`, `Set`, `Assert`, `Build`, `Download`, `Check`.
-- Examples: `Ensure APT keyrings directory exists`, `Install base APT packages`, `Assert a GUI session is present`.
-
-### Module Names
-- Always use fully-qualified module names: `ansible.builtin.apt`, `ansible.builtin.file`, `community.general.snap`, `community.docker.docker_container`, etc.
-- Never use short names like `apt`, `file`, or `copy`.
-
-### Variables
-- Use `snake_case` for all variable names.
-- Repo-wide, tracked defaults belong in `vars/main.yml`.
-- Role-specific defaults belong in `roles/<role>/defaults/main.yml`.
-- Machine-local overrides go in `.env.yml` (untracked); never commit this file.
-- The `preflight` role caches active session facts as `active_session_user_id`, `active_session_user_uid`, `active_session_user_gid`, `active_session_env`, and `gui_session_environment`.
-- Pass `environment: "{{ gui_session_environment }}"` on any task that talks to the desktop session (gsettings, dconf, git_config).
-
-### Role Structure
-- Name roles by responsibility: `install_foo`, `configure_bar`, `setup_baz`.
-- Keep new automation in a role, not in `playbook.yml` directly.
-- Use `import_tasks` for unconditional sub-task files; use `include_tasks` when the inclusion itself is conditional.
-- Add a `meta/main.yml` with `dependencies: []` only when needed (e.g., `setup_resilio_sync`).
-
-### Idempotency
-- All tasks must be idempotent. Prefer declarative modules over `ansible.builtin.command`/`shell`.
-- When `command` is unavoidable (e.g., `gsettings`), set `changed_when` explicitly and read the current value first to compare before writing.
-- Use `failed_when: false` only when a non-zero exit is genuinely acceptable, with a comment explaining why.
-
-### Privilege Boundaries
-- The `preflight` role uses `become: false` on its `setup` call even when the outer play has `become: true`. This is intentional — it resolves the true desktop user's environment rather than root's. Do not remove this.
-- System-level tasks go in the first play (`become: true`); user GUI tasks go in the second play (`become: false`).
-
-### APT Repository Security
-- Always use `signed-by` keyrings stored in `/etc/apt/keyrings/` as `.asc` files.
-- Download keys via `ansible.builtin.get_url` with a `checksum` when one is available.
-- Use `ansible.builtin.apt_repository` to manage sources; never write raw `.list` files.
-
-## Variable Hierarchy
-
-```
-vars/main.yml           ← tracked defaults (all machines)
-  └── .env.yml          ← untracked overrides (this machine only)
-        └── role defaults/main.yml  ← role-scoped defaults
+Recommended pre-PR validation:
+```bash
+ansible-playbook --syntax-check playbook.yml
+yamllint .
+ansible-lint
+./tests/run.sh
 ```
 
-Common `.env.yml` overrides: `user`, `group`, `home_directory`, `git_user_name`, `git_user_email`, `docker_add_user_to_group`, `downloads_migrate_existing`, `pipx_packages`, `snaps_regular`, `applications`, `optional_snap_applications`.
+## Configuration Sources
+- Tracked defaults live in `vars/main.yml`.
+- Machine-local overrides live in `.env.yml` and must stay untracked.
+- `inventory` targets `localhost` with `ansible_connection=local`.
+- `ansible.cfg` disables retry files and uses `interpreter_python = auto_silent`.
+- Do not commit `.env.yml`, `ansible.log`, or machine-specific values.
 
-## Testing Guidelines
+## YAML and Formatting
+- Use two-space indentation.
+- Start YAML files with `---`.
+- Keep line length at or under 140 characters.
+- Quote file modes like `"0644"` and `"0755"`.
+- Keep booleans as YAML booleans, not quoted strings.
+- Use block scalars for multi-line messages or embedded file content.
 
-- Put new test playbooks under `tests/`.
-- Name tests after the behavior they protect: `<feature>_regression.yml`.
-- Set `ANSIBLE_ROLES_PATH` to the repo root's `roles/` directory when running standalone (already done by `tests/run.sh`).
-- Add each new test playbook to `tests/run.sh` so `./tests/run.sh` remains the single test entrypoint.
-- Tests must be local-only (no external hosts, no `become` password prompts unless unavoidable).
-- Write tests for: preflight checks, privilege boundary behavior, idempotent file management, and any new conditional logic.
+## Imports and Modules
+- Always use fully qualified collection names such as `ansible.builtin.file`.
+- Never use short module names like `file`, `copy`, `apt`, or `service`.
+- Prefer `ansible.builtin.import_tasks` for unconditional task composition.
+- Use `ansible.builtin.include_tasks` when the inclusion is conditional or looped.
+- Keep substantial logic inside roles, not inline in `playbook.yml`.
 
-## Commit & Pull Request Guidelines
+## Variables and Types
+- Use `snake_case` for variables, facts, defaults, and registered values.
+- Keep repo-wide defaults in `vars/main.yml`.
+- Keep truly role-scoped defaults in `roles/<role>/defaults/main.yml`.
+- Keep structured lists consistent, for example `applications`, `gsettings`, and `optional_snap_applications`.
+- Treat `desktop_session_required`, `downloads_migrate_existing`, and `docker_add_user_to_group` as real booleans.
+- Prefer data structures that are easy to override from `.env.yml`.
 
-- Short, imperative commit subjects: `Install OpenAI Codex CLI`, `Customize GNOME favorites and terminal appearance`.
-- Group related role and test changes in one commit.
-- PR descriptions should: explain the behavioral change, list validation commands run, and call out any `.env.yml` keys or workstation assumptions.
+## Naming
+- Name roles by responsibility: `install_*`, `configure_*`, `setup_*`.
+- Name tasks with concise imperative phrases such as `Ensure`, `Install`, `Configure`, `Add`, `Remove`, `Assert`, or `Set`.
+- Bare `import_tasks` entries may remain unnamed; this matches the current lint config.
+- Make names describe the user-visible outcome.
 
-## Security & Secrets
+## Idempotency
+- Every task must be safe to rerun.
+- Prefer declarative modules over `command` and `shell`.
+- When a command is unavoidable, read the current state first when practical.
+- Pair `command` usage with `changed_when` when needed to preserve idempotency.
+- Use guards such as `creates`, `state: present`, `state: directory`, and `append: true`.
+- Follow the pattern in `roles/configure_gnome/tasks/apply_one_setting.yml`: read first, write only when different.
 
-- Never commit `.env.yml`, secrets, API keys, or machine-specific credentials.
-- `.env.yml` and `ansible.log` are in `.gitignore` — keep them there.
-- Prefer pinned package sources; use checksums for downloaded artifacts when the vendor publishes them.
-- Preserve all `preflight` assertions — they enforce that the playbook runs only on a local Ubuntu GUI session as the correct user.
+## Error Handling
+- Fail fast with `ansible.builtin.assert` when platform, session, or variable assumptions are violated.
+- Provide explicit `fail_msg` text that tells the operator what to fix.
+- Use `failed_when: false` only when a non-zero exit is acceptable and intentional.
+- Prefer safe migrations over destructive replacements.
+
+## Privilege Boundaries
+- Keep package, repository, service, and container work in the privileged play.
+- Keep home-directory files, desktop settings, and user Git config in the unprivileged play.
+- Do not remove `become: false` from the `preflight` setup task; it intentionally reads the active desktop user's facts.
+- Desktop-aware tasks should pass `environment: "{{ gui_session_environment }}"`.
+
+## Desktop Session Rules
+- Assume a logged-in Ubuntu desktop session, not a headless shell.
+- Reuse `gui_session_environment` instead of rebuilding GUI env vars ad hoc.
+- GUI-sensitive tasks may rely on `DISPLAY`, `WAYLAND_DISPLAY`, `XDG_RUNTIME_DIR`, and DBus session state.
+- If you change GNOME, dconf, Ghostty, or Git config behavior, verify it still works from the logged-in session.
+
+## APT and External Sources
+- Store managed keyrings under `/etc/apt/keyrings/`.
+- Prefer `signed-by` repository definitions.
+- Use `ansible.builtin.apt_repository` instead of writing raw `.list` files.
+- Use `ansible.builtin.get_url` checksums when vendors publish them.
+- Preserve the existing repository hygiene around Signal and Synaptics.
+
+## Shell Usage
+- Prefer `ansible.builtin.command` with `argv` over free-form shell commands.
+- Use `ansible.builtin.shell` only when shell features are required.
+- If shell is necessary, constrain it with `creates`, `chdir`, or other guards.
+- Avoid new remote-script pipelines unless they match an existing deliberate pattern and no safer option is in scope.
+
+## Testing Guidance
+- Put regression playbooks under `tests/`.
+- Name tests after the behavior they protect, usually `<feature>_regression.yml`.
+- Add new tests to `tests/run.sh` so the suite remains centralized.
+- Keep tests local and non-interactive whenever possible.
+- During development, use the single-test command with `ANSIBLE_ROLES_PATH="$PWD/roles"`.
+
+## Security
+- Never commit `.env.yml`, credentials, tokens, or workstation-specific secrets.
+- Be careful with Docker group membership; it is security-sensitive and effectively privileged.
+- Preserve preflight safety checks unless the repository's scope is intentionally changing.
+
+## Review Checklist
+- Is the change in the right role instead of bloating `playbook.yml`?
+- Did you preserve idempotency and privilege boundaries?
+- Did you use FQCN module names and existing repository conventions?
+- Did you update tests when behavior changed?
+- Did you run syntax check, `yamllint`, `ansible-lint`, and the relevant tests?

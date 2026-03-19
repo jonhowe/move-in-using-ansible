@@ -177,6 +177,12 @@ optional_snap_applications:
     snap_name: joplin-desktop
     classic: false
     channel: stable
+  - name: todoist
+    enabled: true
+    install_method: snap
+    snap_name: todoist
+    classic: false
+    channel: stable
   - name: zoom
     enabled: true
     install_method: snap
