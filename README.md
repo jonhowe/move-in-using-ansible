@@ -1,6 +1,6 @@
 # Ansible Playbook: Move-In Using Ansible
 
-This repository bootstraps an Ubuntu workstation after login. It is intended to run on the local machine inside the active GUI session, not from a headless shell.
+This repository bootstraps an Ubuntu 26.04 workstation on first login. [`bootstrap.sh`](bootstrap.sh) is the non-interactive entry point. Started as root, it selects the first human account, waits for that user's GUI session, and runs the playbook as that user. The playbook itself still requires the local desktop session.
 
 ## What this playbook does
 
@@ -28,13 +28,13 @@ This repository bootstraps an Ubuntu workstation after login. It is intended to 
 
 ## Requirements
 
-Run this as the logged-in desktop user on Ubuntu 26.04. The package list uses the 26.04 names `fastfetch` and `docker-compose-v2`.
+The package list uses the Ubuntu 26.04 names `fastfetch` and `docker-compose-v2`.
 
 Stop unless all of these are true:
 
 - `/etc/os-release` says Ubuntu 26.04.
-- The process has `DISPLAY` or `WAYLAND_DISPLAY`, plus `XDG_RUNTIME_DIR`. Preflight rejects a headless or SSH shell.
-- The user can `sudo`.
+- The target user has a GUI session, with `DISPLAY` or `WAYLAND_DISPLAY`, plus `XDG_RUNTIME_DIR`. `bootstrap.sh` waits for that session. Preflight rejects a headless or SSH shell.
+- The script is root, or it is the target user and sudo works without a prompt. Otherwise pass `--become-password-file`.
 - The machine can reach GitHub, the Ubuntu archives, Snapcraft, and the container registry.
 
 The playbook does not install Git, Ansible, or the Docker SDK. Install those first. `community.general` 14.0.1 needs `ansible-core` 2.19 or newer. The Ubuntu 26.04 `ansible` package brings 2.20. `python3-docker` is what the Resilio tasks import. Without it, `docker_container` fails even though the playbook installs Docker itself.
@@ -43,14 +43,35 @@ The repository is public. Clone it over HTTPS. An SSH key is not required.
 
 ## First run
 
-`bootstrap.sh` performs the steps below. On a machine that does not have the checkout yet:
+`bootstrap.sh` is the non-interactive first-login entry point. It does not prompt. Run it as root and it selects the first human account under `/home` (the account created by the installer). It waits up to 300 seconds for that user's GUI session, installs Git, Ansible, and the Docker SDK, clones this repository to `~/git/move-in-using-ansible`, and runs the playbook as that user.
+
+When the script is root and no password file is given, it installs a temporary `NOPASSWD` sudoers rule for the target user and removes that rule when it exits. As the target user, sudo must already work without a password, or the script needs `--become-password-file`. The password is read from that file and is not written into the repo.
+
+Defaults live at the top of `bootstrap.sh`. CLI flags override them:
+
+```bash
+bootstrap.sh \
+  --user jhowe \
+  --git-name "Example User" \
+  --git-email user@example.com \
+  --opencode-provider-base-url http://127.0.0.1:4001/v1 \
+  --repo-dir /home/jhowe/git/move-in-using-ansible \
+  --session-wait 300 \
+  --become-password-file /run/move-in-sudo-password
+```
+
+`--user` defaults to the lowest uid at or above 1000 with a home under `/home` and a real shell. `--git-name` defaults to that account's full name, and `--git-email` defaults to `name@hostname`. Those two are written to a new `.env.yml`. An existing `.env.yml` is left unchanged. Omit `--opencode-provider-base-url` to keep the playbook default. Do not pass `user`, `group`, or `home_directory`. The playbook reads those from the session.
+
+On a machine that does not have the checkout yet, the installer can start a downloaded copy. That copy clones the repository and continues with the checkout's script:
 
 ```bash
 curl -fsSL -o /tmp/move-in-bootstrap.sh https://raw.githubusercontent.com/jonhowe/move-in-using-ansible/main/bootstrap.sh
 bash /tmp/move-in-bootstrap.sh
 ```
 
-From an existing checkout, run `./bootstrap.sh`. Set `GIT_USER_NAME` and `GIT_USER_EMAIL` together to write a new `.env.yml`. Set `OPENCODE_PROVIDER_BASE_URL` when the provider is not the tracked default. An existing `.env.yml` is left unchanged. Set `ANSIBLE_BECOME_PASS` in the same process for non-interactive sudo. The script does not write that password down. `MOVE_IN_REPO_DIR` changes the clone destination. The default is `~/git/move-in-using-ansible`.
+From an existing checkout, run `./bootstrap.sh`.
+
+The same steps, without the script, are:
 
 Install the three missing tools:
 
@@ -83,21 +104,23 @@ Install collections. `community.general` is pinned to 14.0.1 because snap revisi
 ansible-galaxy collection install -r collections/requirements.yml
 ```
 
-Run the playbook. A sudo timestamp is not enough: the run takes longer than the default 15-minute cache, mostly while installing snaps. For a non-interactive run, export `ANSIBLE_BECOME_PASS` in that same process and omit `--ask-become-pass`. Do not write the password into the repo, a file, or the command line.
+Run the playbook as the desktop user, with that user's GUI environment. Do not use `--ask-become-pass` from an installer. Export `ANSIBLE_BECOME_PASS` in the same process when sudo needs a password. Do not write the password into the repo or the command line.
 
 ```bash
-ansible-playbook playbook.yml --ask-become-pass
+ansible-playbook playbook.yml
 ```
 
 Success is a recap with `failed=0`. Resilio should answer at `http://127.0.0.1:8888`, and `~/.local/bin/opencode --version` should print `2.3.0`.
 
 The `docker` group change applies to new logins only. Terminals that were already open still get "permission denied" from the Docker socket until the user logs out and back in.
 
-Run a subset with tags:
+Run a subset with tags from a terminal where someone can type the sudo password:
 
 ```bash
 ansible-playbook playbook.yml --ask-become-pass --tags "base,apps"
 ```
+
+An unattended run leaves off `--ask-become-pass` and supplies `ANSIBLE_BECOME_PASS` in the process environment instead.
 
 ## Configuration
 
