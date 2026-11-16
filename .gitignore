@@ -1,3 +1,4 @@
 ansible.log
+.env
 .env.yml
 token-usage-output.txt

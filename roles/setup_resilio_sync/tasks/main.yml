@@ -1,4 +1,34 @@
 ---
+- name: Read the host timezone
+  ansible.builtin.slurp:
+    src: /etc/timezone
+  register: host_timezone_file
+  failed_when: false
+
+- name: Cache the host timezone
+  ansible.builtin.set_fact:
+    resilio_host_timezone: "{{ host_timezone_file.content | b64decode | trim }}"
+  when:
+    - host_timezone_file.content is defined
+    - host_timezone_file.content | default('') | length > 0
+
+- name: Use UTC when the host timezone file is missing
+  ansible.builtin.set_fact:
+    resilio_host_timezone: Etc/UTC
+  when: resilio_host_timezone | default('') | length == 0
+
+- name: Ensure Resilio host directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: "0755"
+  loop:
+    - "{{ resilio_sync.btsync_root }}/config"
+    - "{{ btsync_folder_root }}"
+    - "{{ xdg_download_dir }}"
+
 - name: Pull Resilio Sync Docker image
   community.docker.docker_image:
     name: "{{ resilio_sync.image }}"
@@ -10,17 +40,21 @@
     image: "{{ resilio_sync.image }}"
     state: started
     restart_policy: "{{ resilio_sync.restart_policy }}"
+    memory: "{{ resilio_sync.mem_limit }}"
     ports:
       - "127.0.0.1:{{ resilio_sync.webui_port }}:8888"
-      - "{{ resilio_sync.peer_port }}:5555"
+      - "{{ resilio_sync.peer_port }}:55555/tcp"
+      - "{{ resilio_sync.peer_port }}:55555/udp"
     volumes:
-      - "{{ resilio_sync.btsync_root }}:/mnt/sync"
+      - "{{ resilio_sync.btsync_root }}/config:/config"
+      - "{{ btsync_folder_root }}:/sync"
+      - "{{ xdg_download_dir }}:/downloads"
     log_driver: json-file
     log_options:
       max-size: "15m"
       max-file: "2"
     env:
-      MEM_LIMIT: "{{ resilio_sync.mem_limit }}"
       PUID: "{{ active_session_user_uid | string }}"
       PGID: "{{ active_session_user_gid | string }}"
+      TZ: "{{ resilio_host_timezone }}"
     cpus: "{{ resilio_sync.cpus }}"

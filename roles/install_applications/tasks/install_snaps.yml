@@ -1,20 +1,18 @@
 ---
-- name: Install classic snaps
+- name: Install snaps at pinned revisions
   community.general.snap:
-    name: "{{ item }}"
-    classic: true
-  loop: "{{ snaps_classic }}"
+    name: "{{ item.name }}"
+    classic: "{{ item.classic | bool }}"
+    revision: "{{ item.revision | int }}"
+  loop: "{{ snaps_classic + snaps_regular }}"
+  loop_control:
+    label: "{{ item.name }}"
 
-- name: Install regular snaps
-  community.general.snap:
-    name: "{{ item }}"
-  loop: "{{ snaps_regular }}"
-
-- name: Install optional snap applications
+- name: Install optional snap applications at pinned revisions
   community.general.snap:
     name: "{{ item.snap_name }}"
-    classic: "{{ item.classic | default(false) }}"
-    channel: "{{ item.channel | default('stable') }}"
+    classic: "{{ item.classic | bool }}"
+    revision: "{{ item.revision | int }}"
   loop: "{{ optional_snap_applications }}"
   loop_control:
     label: "{{ item.name }}"

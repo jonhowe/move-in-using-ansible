@@ -1,5 +1,7 @@
 ---
-# Override this in .env.yml with the vendor-published checksum when available.
+# Synaptics does not publish a checksum for this package. Leave this empty unless
+# a vendor checksum is available to set from .env.yml. A hash from one download
+# is not a vendor attestation.
 synaptics_repository_keyring_deb_checksum: ""
 
 # Source: https://www.synaptics.com/products/displaylink-graphics/downloads/ubuntu

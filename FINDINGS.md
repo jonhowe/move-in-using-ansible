@@ -1,197 +1,24 @@
-# Repository Findings
+# Repository findings
 
-## Current state
+This file records the outcome of the workstation-bootstrap cleanup. The playbook is still a local Ubuntu GUI session bootstrap, split into a privileged system play and an unprivileged user play.
 
-This repository has been remediated from the earlier review and now follows a safer structure for an Ubuntu desktop bootstrap workflow.
+## Fixed
 
-The most important changes already applied are:
+- The privileged play included `preflight` twice. It now includes that role once. The user play still includes it once.
+- `roles/install_displaylink_repo` was unused. DisplayLink stays in `apt_packages`, which can take a checksum.
+- `.env` was tracked, held this workstation's Git identity, and was never loaded. It is removed from the index and ignored. Ansible reads `.env.yml`.
+- `XDG_DOWNLOAD_DIR` pointed at the parent of the synced Downloads directory. It now uses `xdg_download_dir`, the same path as the `~/Downloads` symlink.
+- Downloads migration uses `mv -n`. If a destination name already exists, the play fails and does not delete the leftover files.
+- Resilio Sync now uses LinuxServer `3.1.2` with digest `sha256:2e8e4b1dc34336e67effe28600e61888b1332b5241b8185958342b7e6df62d65`. The official `resilio/sync` image has no version tag newer than `2.8.1`, and that tag is the same digest as its `latest` tag. The listen port is published on `55555/tcp` and `55555/udp`. Host directories are created first. The memory value is a real Docker limit of `512m`.
+- OpenCode installs `@opencode/cli` `2.3.0` with npm. The config is the native OpenCode 2 shape, the code-reviewer model id matches `xai/grok-code-fast-1`, and provider URLs come from `opencode_provider_base_url`.
+- TokenScope `2.1.0` supports OpenCode 2, so the plugin stays and is pinned. The OpenCode 1 command file is removed because OpenCode 2 registers `/tokenscope`.
+- `community.general` is pinned to `14.0.1`. Snap installs use integer revisions recorded on 2026-11-14, and snapd holds those revisions against automatic refresh.
+- The Signal repository stanza stays on `xenial` because that is still the vendor suite. The README records the Ubuntu 24.04 `update-manager` caveat.
+- `synaptics_repository_keyring_deb_checksum` stays empty. Synaptics does not publish a checksum, and a hash from one download is not a vendor attestation.
+- `docker_add_user_to_group` stays `true`. The README states that this is root-equivalent and that `.env.yml` can set it to `false`.
 
-- split execution into a privileged system play and a logged-in GUI user play
-- added a `preflight` role that enforces local Ubuntu plus an active GUI session
-- added optional local overrides through `.env.yml`
-- replaced direct-download installers for Joplin, Zoom, and Rambox with Snap-based installs
-- removed system `pip` usage and switched optional Python CLI installs to `pipx`
-- made `~/Downloads` migration non-destructive and user-visible
-- removed insecure global Ansible defaults such as disabled host key checking and repo-root log output
+## Left unchanged on purpose
 
-## Files that define the new execution model
+`.env` remains in older commits. Removing it from history requires a rewrite and a force-push. This change does not do that.
 
-- [`playbook.yml`](playbook.yml)
-- [`roles/preflight/tasks/main.yml`](roles/preflight/tasks/main.yml)
-- [`vars/main.yml`](vars/main.yml)
-- [`.env.yml.example`](.env.yml.example)
-
-## What was remediated
-
-### 1. GUI-session correctness
-
-Status:
-- Remediated
-
-Changes:
-- The playbook now has a separate user-session play with `become: false`.
-- `preflight` asserts:
-  - local execution
-  - Ubuntu/Debian-family target
-  - configured user matches the active login session
-  - GUI session variables are present before desktop customization runs
-- GUI-sensitive tasks now use a constructed `gui_session_environment`.
-
-Primary references:
-- [`playbook.yml`](playbook.yml)
-- [`roles/preflight/tasks/main.yml`](roles/preflight/tasks/main.yml)
-- [`roles/configure_gnome/tasks/main.yml`](roles/configure_gnome/tasks/main.yml)
-
-### 2. Override mechanism for machine-specific values
-
-Status:
-- Remediated
-
-Changes:
-- Tracked defaults remain in `vars/main.yml`.
-- Untracked machine-specific overrides can now live in `.env.yml`.
-- `.env.yml.example` documents the supported override pattern.
-
-Primary references:
-- [`.env.yml.example`](.env.yml.example)
-- [`.gitignore`](.gitignore)
-
-### 3. Python tooling
-
-Status:
-- Remediated
-
-Changes:
-- The old system `pip` workflow and `--break-system-packages` usage were removed.
-- Base packages now install `pipx` and `python3-venv`.
-- Optional Python CLI tools are managed through `community.general.pipx`.
-
-Primary references:
-- [`vars/main.yml`](vars/main.yml)
-- [`roles/install_python_tools/tasks/main.yml`](roles/install_python_tools/tasks/main.yml)
-
-### 4. Downloads safety
-
-Status:
-- Remediated
-
-Changes:
-- Existing files in `~/Downloads` are now discovered before any replacement occurs.
-- If content exists, the playbook prints a message and moves files into the synced Downloads directory.
-- If migration is disabled, the playbook fails instead of deleting data.
-- Only after migration or empty-directory confirmation does the symlink get created.
-
-Primary references:
-- [`roles/update_user_dirs/tasks/main.yml`](roles/update_user_dirs/tasks/main.yml)
-
-### 5. Ansible configuration hygiene
-
-Status:
-- Remediated
-
-Changes:
-- Removed global `become` defaults from `ansible.cfg`.
-- Removed disabled host key checking.
-- Removed repo-root `ansible.log` configuration.
-- Kept the config minimal and local-safe.
-
-Primary references:
-- [`ansible.cfg`](ansible.cfg)
-
-### 6. Remote installer risk
-
-Status:
-- Mostly remediated
-
-Changes:
-- The previous direct-download flows for Joplin, Zoom, and Rambox were removed.
-- Those apps are now installed through Snap roles with configurable settings in `vars/main.yml` or `.env.yml`.
-
-Primary references:
-- [`roles/install_joplin/tasks/main.yml`](roles/install_joplin/tasks/main.yml)
-- [`roles/install_zoom/tasks/main.yml`](roles/install_zoom/tasks/main.yml)
-- [`roles/install_rambox/tasks/main.yml`](roles/install_rambox/tasks/main.yml)
-
-## Remaining risks and follow-up work
-
-### 1. Residual: Resilio Sync container image is still not pinned to a tag or digest
-
-Status:
-- Open
-
-Evidence:
-- [`vars/main.yml`](vars/main.yml#L53) still uses `resilio/sync` without an immutable tag or digest.
-
-Why it matters:
-- Container provenance and reproducibility are still weaker than ideal.
-
-Recommended future remediation:
-- Pin the image to an explicit tag or digest in `vars/main.yml` or `.env.yml`.
-- If possible, use a digest and document the upgrade procedure.
-
-### 2. Residual: Synaptics keyring checksum is supported but not populated
-
-Status:
-- Open
-
-Evidence:
-- [`roles/apt_packages/defaults/main.yml`](roles/apt_packages/defaults/main.yml#L2) exposes `synaptics_repository_keyring_deb_checksum`, but the default is empty.
-
-Why it matters:
-- The task can verify integrity, but only if a trusted checksum is supplied.
-
-Recommended future remediation:
-- Add the vendor-published checksum in `.env.yml` or tracked defaults once verified.
-
-### 3. Residual: Snap replaces direct downloads, but exact application versions are not pinned
-
-Status:
-- Open
-
-Evidence:
-- [`vars/main.yml`](vars/main.yml#L126) defines Joplin, Zoom, and Rambox through Snap channels rather than explicit versions.
-
-Why it matters:
-- This is safer than raw script or `.deb` downloads, but it is not fully reproducible.
-
-Recommended future remediation:
-- If exact version pinning becomes important, define a stricter application packaging strategy per app and document support expectations.
-
-### 4. Residual: Signal repository stanza still uses `xenial`
-
-Status:
-- Open
-
-Evidence:
-- [`vars/main.yml`](vars/main.yml#L14) still uses the vendor repository format with `xenial`.
-
-Why it matters:
-- It may still be valid, but it should be periodically re-checked against current vendor guidance.
-
-### 5. Residual: Docker group membership remains a conscious security tradeoff
-
-Status:
-- Open by design
-
-Evidence:
-- [`vars/main.yml`](vars/main.yml#L8) defaults `docker_add_user_to_group: true`.
-
-Why it matters:
-- Local Docker group membership is effectively root-equivalent.
-
-Recommended future remediation:
-- Leave it configurable.
-- Disable it in `.env.yml` if stricter host security is preferred.
-
-## Recommended next remediation order
-
-1. Pin the Resilio Sync image tag or digest.
-2. Populate `synaptics_repository_keyring_deb_checksum` with a verified value.
-3. Decide whether Snap-based desktop apps are acceptable long-term or whether any app should move to a more tightly pinned packaging path.
-4. Re-check the Signal vendor repository format.
-
-## Verification notes
-
-- `ansible-playbook --syntax-check playbook.yml` parsed successfully in this environment.
-- The environment emitted plugin-load permission warnings during syntax check because of sandbox restrictions, so this was only a limited validation pass.
-- `ansible-lint` and `yamllint` were not available in the current environment, so lint validation was not executed here.
+An existing Resilio identity created by the official `resilio/sync` image is not imported into the LinuxServer layout. Files already on disk are not deleted.

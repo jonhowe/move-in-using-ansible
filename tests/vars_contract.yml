@@ -1,0 +1,46 @@
+---
+- name: Assert workstation variable contracts
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - ../vars/main.yml
+
+  vars:
+    expected_resilio_image: >-
+      lscr.io/linuxserver/resilio-sync:3.1.2@sha256:2e8e4b1dc34336e67effe28600e61888b1332b5241b8185958342b7e6df62d65
+
+  tasks:
+    - name: Assert third-party APT applications have the required keys
+      ansible.builtin.assert:
+        that:
+          - item.name | length > 0
+          - item.repo | length > 0
+          - item.key_url | length > 0
+        fail_msg: "Each applications entry needs name, repo, and key_url."
+      loop: "{{ applications }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Assert snap entries are pinned revisions
+      ansible.builtin.assert:
+        that:
+          - item.name | length > 0
+          - item.classic | type_debug == "bool"
+          - item.revision == (item.revision | int)
+          - item.revision > 0
+        fail_msg: "Each snap entry needs a name, a boolean classic flag, and an integer revision."
+      loop: "{{ snaps_classic + snaps_regular + optional_snap_applications }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Assert Resilio, downloads, and OpenCode pins
+      ansible.builtin.assert:
+        that:
+          - resilio_sync.image == expected_resilio_image
+          - resilio_sync.mem_limit == "512m"
+          - resilio_sync.peer_port == "55555"
+          - xdg_download_dir == btsync_folder_root ~ "/Downloads"
+          - opencode_npm_version == "2.3.0"
+        fail_msg: "Resilio, XDG downloads, or OpenCode defaults drifted from the pinned contract."

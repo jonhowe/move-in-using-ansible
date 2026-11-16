@@ -7,36 +7,34 @@
     group: "{{ group }}"
     mode: "0755"
 
-- name: Ensure opencode command directory exists
+- name: Ensure the user-local npm prefix exists
   ansible.builtin.file:
-    path: "{{ home_directory }}/.config/opencode/command"
+    path: "{{ home_directory }}/.local"
     state: directory
     owner: "{{ user }}"
     group: "{{ group }}"
     mode: "0755"
 
-- name: Install opencode CLI
-  ansible.builtin.shell: curl -fsSL https://opencode.ai/install | bash
-  args:
-    executable: /bin/bash
-    chdir: "{{ home_directory }}"
-    creates: "{{ home_directory }}/.config/opencode/package.json"
+- name: Install OpenCode 2 CLI
+  community.general.npm:
+    name: "@opencode/cli"
+    version: "{{ opencode_npm_version }}"
+    global: true
+    state: present
+  environment:
+    HOME: "{{ home_directory }}"
+    NPM_CONFIG_PREFIX: "{{ home_directory }}/.local"
 
 - name: Deploy opencode.json
-  ansible.builtin.copy:
-    src: opencode/opencode.json
+  ansible.builtin.template:
+    src: opencode.json.j2
     dest: "{{ home_directory }}/.config/opencode/opencode.json"
     owner: "{{ user }}"
     group: "{{ group }}"
     mode: "0644"
-    force: false
+    force: true
 
-- name: Deploy opencode commands
-  ansible.builtin.copy:
-    src: opencode/command/
-    dest: "{{ home_directory }}/.config/opencode/command/"
-    owner: "{{ user }}"
-    group: "{{ group }}"
-    mode: "0644"
-    directory_mode: "0755"
-    force: false
+- name: Remove the OpenCode 1 tokenscope command file
+  ansible.builtin.file:
+    path: "{{ home_directory }}/.config/opencode/command/tokenscope.md"
+    state: absent

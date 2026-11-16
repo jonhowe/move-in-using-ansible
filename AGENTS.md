@@ -42,7 +42,6 @@ roles/
   update_user_dirs/
   configure_gnome/
   setup_flameshot/
-  install_displaylink_repo/
 ```
 
 ## Commands
