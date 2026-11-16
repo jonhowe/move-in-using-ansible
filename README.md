@@ -43,6 +43,15 @@ The repository is public. Clone it over HTTPS. An SSH key is not required.
 
 ## First run
 
+`bootstrap.sh` performs the steps below. On a machine that does not have the checkout yet:
+
+```bash
+curl -fsSL -o /tmp/move-in-bootstrap.sh https://raw.githubusercontent.com/jonhowe/move-in-using-ansible/main/bootstrap.sh
+bash /tmp/move-in-bootstrap.sh
+```
+
+From an existing checkout, run `./bootstrap.sh`. Set `GIT_USER_NAME` and `GIT_USER_EMAIL` together to write a new `.env.yml`. Set `OPENCODE_PROVIDER_BASE_URL` when the provider is not the tracked default. An existing `.env.yml` is left unchanged. Set `ANSIBLE_BECOME_PASS` in the same process for non-interactive sudo. The script does not write that password down. `MOVE_IN_REPO_DIR` changes the clone destination. The default is `~/git/move-in-using-ansible`.
+
 Install the three missing tools:
 
 ```bash
